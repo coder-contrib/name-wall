@@ -1,35 +1,75 @@
-// Fetches the list of names from the local preview server (/api/names),
-// which reads the names/ directory at request time — so a newly added
-// names/<handle>.json shows up on refresh with no shared manifest to edit.
-async function render() {
-  const wall = document.getElementById("wall");
-  const count = document.getElementById("count");
+// Renders the wall by DIFFING against the DOM — new names animate in once,
+// existing names stay put (no full re-render, so no flicker). Color changes
+// update in place.
+
+const wall = document.getElementById("wall");
+const countEl = document.getElementById("count");
+const seen = new Map(); // handle -> { el, color, name }
+
+// Admin mode: ?admin in the URL (the Wall of Fame display sets this) shows a badge.
+const ADMIN = new URLSearchParams(location.search).has("admin");
+
+function keyOf(n) {
+  return n.handle || n.name || JSON.stringify(n);
+}
+
+async function tick() {
+  let names;
   try {
-    const res = await fetch("/api/names");
-    const names = await res.json();
-    if (!names.length) {
-      wall.textContent = "No names yet — be the first!";
-      return;
-    }
-    wall.innerHTML = "";
-    for (const n of names) {
+    names = await (await fetch("/api/names")).json();
+  } catch {
+    return; // transient; keep what's on screen
+  }
+
+  const present = new Set();
+  for (const n of names) {
+    const k = keyOf(n);
+    present.add(k);
+    const color = n.color || "#ffffff";
+    const label = n.name || n.handle || "";
+    let entry = seen.get(k);
+    if (!entry) {
+      // new name → create + animate in once
       const el = document.createElement("div");
-      el.className = "name";
-      el.style.color = n.color || "#e6e8ee";
-      el.innerHTML = `${escapeHtml(n.name || n.handle)}<small>@${escapeHtml(n.handle || "")}</small>`;
+      el.className = "name name--enter";
+      el.style.color = color;
+      el.innerHTML = `${esc(label)}<small>@${esc(n.handle || "")}</small>`;
       wall.appendChild(el);
+      // remove the enter class after the animation so it never replays
+      el.addEventListener("animationend", () => el.classList.remove("name--enter"), { once: true });
+      seen.set(k, { el, color, name: label });
+    } else if (entry.color !== color || entry.name !== label) {
+      // changed → update in place, no re-animate
+      entry.el.style.color = color;
+      entry.el.innerHTML = `${esc(label)}<small>@${esc(n.handle || "")}</small>`;
+      entry.color = color;
+      entry.name = label;
     }
-    count.textContent = String(names.length);
-  } catch (e) {
-    wall.textContent = "Could not load names. Is the preview server running?";
+  }
+  // remove names that disappeared
+  for (const [k, entry] of seen) {
+    if (!present.has(k)) {
+      entry.el.remove();
+      seen.delete(k);
+    }
+  }
+
+  countEl.textContent = String(names.length);
+  if (wall.dataset.empty === "1" && names.length) {
+    wall.dataset.empty = "0";
+  }
+  if (!names.length && wall.childElementCount === 0) {
+    wall.dataset.empty = "1";
   }
 }
 
-function escapeHtml(s) {
+function esc(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   }[c]));
 }
 
-render();
-setInterval(render, 3000); // auto-refresh so a new file appears within ~3s
+if (ADMIN) document.body.classList.add("admin");
+
+tick();
+setInterval(tick, 3000);
