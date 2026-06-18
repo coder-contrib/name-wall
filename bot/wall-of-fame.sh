@@ -18,7 +18,10 @@ PORT="${PORT:-8080}"
 PULL_INTERVAL="${PULL_INTERVAL:-5}"
 cd "$(dirname "$0")/.." || exit 1
 
-# Coder API token → live "active now" indicator.
+# Coder API token — used for the live "active now" indicator AND for the role
+# bot to grant agents-access. The coder-login module logs the workspace owner
+# (admin on the display) into the CLI, so `coder tokens create` mints a real
+# org-admin session token here.
 if [ -z "${CODER_SESSION_TOKEN:-}" ]; then
   CODER_BIN=$(ls /tmp/coder.*/coder 2>/dev/null | head -1)
   [ -n "$CODER_BIN" ] && export CODER_SESSION_TOKEN=$("$CODER_BIN" tokens create --lifetime 24h 2>/dev/null || true)
@@ -56,7 +59,17 @@ if [ "${NO_MERGE_BOT:-0}" != "1" ]; then
   MERGE_PID=$!
 fi
 
-cleanup() { kill $SERVE_PID $MERGE_PID 2>/dev/null; }
+# Role bot: auto-grant the agents-access role to new attendee logins so the
+# Agents UI shows up for them. Needs an org-admin Coder token (the admin
+# display has one via coder-login). Skips if there's no session token.
+ROLE_PID=""
+if [ "${NO_ROLE_BOT:-0}" != "1" ] && [ -n "${CODER_SESSION_TOKEN:-}" ] && [ -f ./bot/role-bot.sh ]; then
+  echo "[wall-of-fame] starting role bot (auto-grant agents-access)"
+  ./bot/role-bot.sh &
+  ROLE_PID=$!
+fi
+
+cleanup() { kill $SERVE_PID $MERGE_PID $ROLE_PID 2>/dev/null; }
 trap cleanup EXIT
 
 # Keep the displayed wall pinned to merged origin/main.
