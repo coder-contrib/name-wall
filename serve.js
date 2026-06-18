@@ -6,7 +6,8 @@
 //                  no shared manifest; each attendee only edits their own file)
 //   /api/active  — if a Coder token is in the env (CODER_SESSION_TOKEN +
 //                  CODER_URL, present on the admin Wall-of-Fame display), returns
-//                  users active in the last 5 minutes (Coder last_seen_at).
+//                  the count of distinct people with a workshop workspace going
+//                  right now (running build + agent connected in the last 5 min).
 //                  Returns {available:false} when no token (attendee preview).
 
 const http = require("http");
@@ -20,7 +21,12 @@ const PORT = process.env.PORT || 8080;
 // Coder API access for the live-activity indicator (admin display only).
 const CODER_URL = (process.env.CODER_URL || "http://localhost:3000").replace(/\/$/, "");
 const CODER_TOKEN = process.env.CODER_SESSION_TOKEN || process.env.CODER_TOKEN || "";
-const ACTIVE_WINDOW_MS = 5 * 60 * 1000; // "active in the last 5 minutes"
+const ACTIVE_WINDOW_MS = 5 * 60 * 1000; // "active now" = activity in last 5 min
+// Owners to exclude from the "active now" count (workshop hosts/admins, not
+// attendees). Comma-separated usernames in ACTIVE_EXCLUDE; defaults to admin.
+const ACTIVE_EXCLUDE = new Set(
+  (process.env.ACTIVE_EXCLUDE || "admin").split(",").map((s) => s.trim()).filter(Boolean)
+);
 
 const TYPES = {
   ".html": "text/html; charset=utf-8",
@@ -48,10 +54,15 @@ function readNames() {
   return out;
 }
 
-// Query Coder for users seen within the activity window.
+// Count people actively doing the workshop right now. We use WORKSPACES, not
+// users: Coder only refreshes user.last_seen_at about once an hour (throttled in
+// the apikey middleware: it writes last_seen_at only when key.LastUsed is >1h
+// old), so a 5-minute "active now" can't be derived from it. A workspace's agent
+// last_connected_at is a real heartbeat (updates every few seconds), and
+// last_used_at tracks interaction — either being recent means the person is here.
 function readActive(cb) {
   if (!CODER_TOKEN) return cb({ available: false });
-  const url = new URL(CODER_URL + "/api/v2/users?limit=1000");
+  const url = new URL(CODER_URL + "/api/v2/workspaces?limit=1000");
   const lib = url.protocol === "https:" ? https : http;
   const req = lib.request(
     url,
@@ -61,12 +72,25 @@ function readActive(cb) {
       r.on("data", (c) => (body += c));
       r.on("end", () => {
         try {
-          const users = JSON.parse(body).users || [];
+          const list = JSON.parse(body).workspaces || [];
           const cutoff = Date.now() - ACTIVE_WINDOW_MS;
-          const active = users
-            .filter((u) => u.last_seen_at && Date.parse(u.last_seen_at) >= cutoff)
-            .map((u) => u.username);
-          cb({ available: true, count: active.length, users: active });
+          const recent = (t) => t && Date.parse(t) >= cutoff;
+          const owners = new Set();
+          for (const w of list) {
+            const owner = w.owner_name;
+            if (!owner || ACTIVE_EXCLUDE.has(owner)) continue;
+            if ((w.latest_build && w.latest_build.status) !== "running") continue;
+            // Agent heartbeat (preferred) or recent interaction.
+            let live = recent(w.last_used_at);
+            const resources = (w.latest_build && w.latest_build.resources) || [];
+            for (const res of resources) {
+              for (const a of res.agents || []) {
+                if (recent(a.last_connected_at)) live = true;
+              }
+            }
+            if (live) owners.add(owner);
+          }
+          cb({ available: true, count: owners.size, users: [...owners] });
         } catch {
           cb({ available: false });
         }
