@@ -29,6 +29,11 @@ export CODER_URL="${CODER_URL:-http://10.42.0.1:3000}"  # in-pod Coder address
 export MERGED_FILE="${MERGED_FILE:-/tmp/name-wall-merged}"
 : > "$MERGED_FILE"
 
+# Track PR#@sha we've already requested changes on (survives across this run so
+# the bot doesn't re-comment on the same commit every poll).
+export REVIEWED_FILE="${REVIEWED_FILE:-/tmp/name-wall-reviewed}"
+: > "$REVIEWED_FILE"
+
 # Anthropic key for the review agent (the merge bot reviews each PR, not blanket
 # approve). Read from env, or from the box's local.nix if present.
 if [ -z "${ANTHROPIC_API_KEY:-}" ] && [ -r /etc/nixos-repo/hosts/coderbox/local.nix ]; then

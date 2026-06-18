@@ -7,6 +7,9 @@
 #   2. Agent-in-the-loop: a small Claude review of the diff decides whether the
 #      entry is a single, sane name card (no abuse/slurs/malice, only the
 #      author's own file). Only an "approve" verdict gets approved + merged.
+#      A "reject" verdict posts a REQUEST_CHANGES review (once per head commit,
+#      no spam) explaining why, and keeps polling so a pushed fix is re-reviewed
+#      and merged automatically.
 #   3. On merge, record the PR number to a file so the live PR-queue can drop it
 #      immediately (no waiting for the next GitHub poll).
 #
@@ -22,6 +25,7 @@
 #   ANTHROPIC_API_KEY Anthropic key for the review agent
 #   REVIEW_MODEL      default claude-sonnet-4-6
 #   MERGED_FILE       path the queue reads to drop merged PRs (default /tmp/name-wall-merged)
+#   REVIEWED_FILE     path tracking PR#@sha we've already requested changes on (default /tmp/name-wall-reviewed)
 #   DRY_RUN           1 = log verdicts, don't approve/merge
 #   NO_REVIEW         1 = skip the LLM and use mechanical gate only (not recommended)
 set -uo pipefail
@@ -31,6 +35,7 @@ INTERVAL="${INTERVAL:-5}"
 DRY_RUN="${DRY_RUN:-0}"
 REVIEW_MODEL="${REVIEW_MODEL:-claude-sonnet-4-6}"
 MERGED_FILE="${MERGED_FILE:-/tmp/name-wall-merged}"
+REVIEWED_FILE="${REVIEWED_FILE:-/tmp/name-wall-reviewed}"
 ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
 NO_REVIEW="${NO_REVIEW:-0}"
 
@@ -41,7 +46,7 @@ if [ -z "$ANTHROPIC_API_KEY" ] && [ "$NO_REVIEW" != "1" ]; then
   echo "[merge-bot] WARNING: no ANTHROPIC_API_KEY — set NO_REVIEW=1 for mechanical-only, or provide a key. Refusing blanket approve."
   exit 1
 fi
-touch "$MERGED_FILE" 2>/dev/null || true
+touch "$MERGED_FILE" "$REVIEWED_FILE" 2>/dev/null || true
 
 echo "[merge-bot] watching $REPO (interval=${INTERVAL}s dry_run=$DRY_RUN review=$([ "$NO_REVIEW" = 1 ] && echo off || echo on))"
 
@@ -99,6 +104,30 @@ ${diff}"
   fi
 }
 
+# Request changes on a rejected PR, but only once per head commit so we don't
+# spam. We re-review on every poll; when the author pushes a fix the head SHA
+# changes, the PR#@sha key is new, and it gets reviewed (and merged) again.
+request_changes() {
+  local num="$1" reason="$2" sha key
+  sha=$(gh pr view "$num" --repo "$REPO" --json headRefOid --jq '.headRefOid' 2>/dev/null)
+  key="${num}@${sha}"
+  if grep -qxF "$key" "$REVIEWED_FILE" 2>/dev/null; then
+    return 0   # already told them about this exact commit; keep polling quietly
+  fi
+  if [ "$DRY_RUN" = "1" ]; then
+    echo "[merge-bot] DRY_RUN would request changes on #$num — $reason"
+  else
+    gh pr review "$num" --repo "$REPO" --request-changes --body \
+"Thanks for adding yourself to the wall! The workshop bot can't merge this yet:
+
+> ${reason}
+
+Tweak your \`names/<handle>.json\` (CSS animations, colors, and emoji are all welcome — just no \`<script>\`, event handlers, or external URLs) and push again. I'll re-review automatically. 💜" 2>/dev/null \
+      && echo "[merge-bot] ✍️  requested changes on #$num — $reason"
+  fi
+  echo "$key" >> "$REVIEWED_FILE"
+}
+
 approve_and_merge() {
   local num="$1"
   if [ "$DRY_RUN" = "1" ]; then echo "[merge-bot] DRY_RUN would approve+merge #$num"; return; fi
@@ -124,7 +153,7 @@ while true; do
       echo "[merge-bot] 🤖 approved #$num"
       approve_and_merge "$num"
     else
-      echo "[merge-bot] 🚫 held #$num — ${verdict#reject:}"
+      request_changes "$num" "${verdict#reject:}"
     fi
     sleep 1
   done
