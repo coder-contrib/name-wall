@@ -150,9 +150,10 @@ function readMembers(cb) {
 // GitHub token in the env (GITHUB_TOKEN), present on the admin display.
 const GH_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "";
 const WALL_REPO = process.env.WALL_REPO || "coder-contrib/name-wall";
-function readPending(cb) {
-  if (!GH_TOKEN) return cb({ available: false });
-  const u = new URL(`https://api.github.com/repos/${WALL_REPO}/pulls?state=open&sort=created&direction=asc&per_page=50`);
+// GitHub GET helper (REST, token auth) returning parsed JSON.
+function ghGet(path, cb) {
+  if (!GH_TOKEN) return cb(null);
+  const u = new URL("https://api.github.com" + path);
   const req = https.request(u, {
     headers: {
       "Authorization": `Bearer ${GH_TOKEN}`,
@@ -163,36 +164,67 @@ function readPending(cb) {
   }, (r) => {
     let body = "";
     r.on("data", (c) => (body += c));
-    r.on("end", () => {
-      try {
-        const prs = JSON.parse(body);
-        if (!Array.isArray(prs)) return cb({ available: false });
-        // Drop PRs the merge bot just merged so the queue updates instantly
-        // (GitHub's open-PR list can lag a few seconds behind a merge).
-        let merged = new Set();
-        try {
-          const mf = process.env.MERGED_FILE || "/tmp/name-wall-merged";
-          merged = new Set(fs.readFileSync(mf, "utf8").split(/\s+/).filter(Boolean).map(Number));
-        } catch { /* no merged file yet */ }
-        const open = prs.filter((p) => !merged.has(p.number));
-        cb({
-          available: true,
-          count: open.length,
-          prs: open.map((p) => ({
-            number: p.number,
-            title: p.title,
-            user: p.user && p.user.login,
-            url: p.html_url,
-          })),
-        });
-      } catch {
-        cb({ available: false });
-      }
+    r.on("end", () => { try { cb(JSON.parse(body)); } catch { cb(null); } });
+  });
+  req.on("error", () => cb(null));
+  req.on("timeout", () => { req.destroy(); cb(null); });
+  req.end();
+}
+
+// Derive a human status for a PR from its review history + mergeability so the
+// queue shows where each entry is: reviewing / changes-requested / re-review /
+// conflicts / queued.
+function prStatus(p, reviews) {
+  if (p.mergeable_state === "dirty" || p.mergeable === false) return "conflicts";
+  const rs = Array.isArray(reviews) ? reviews : [];
+  // Last decisive review (APPROVED or CHANGES_REQUESTED), ignoring COMMENTED.
+  let last = null;
+  for (const rv of rs) {
+    if (rv.state === "APPROVED" || rv.state === "CHANGES_REQUESTED") last = rv;
+  }
+  if (last && last.state === "CHANGES_REQUESTED") {
+    // If the author pushed after the review, it needs another look.
+    const pushed = Date.parse(p.updated_at || 0);
+    const reviewed = Date.parse(last.submitted_at || 0);
+    return pushed > reviewed + 1000 ? "re-review" : "changes-requested";
+  }
+  if (last && last.state === "APPROVED") return "approved";
+  return "reviewing";
+}
+
+function readPending(cb) {
+  if (!GH_TOKEN) return cb({ available: false });
+  ghGet(`/repos/${WALL_REPO}/pulls?state=open&sort=created&direction=asc&per_page=50`, (prs) => {
+    if (!Array.isArray(prs)) return cb({ available: false });
+    let merged = new Set();
+    try {
+      const mf = process.env.MERGED_FILE || "/tmp/name-wall-merged";
+      merged = new Set(fs.readFileSync(mf, "utf8").split(/\s+/).filter(Boolean).map(Number));
+    } catch { /* no merged file yet */ }
+    const open = prs.filter((p) => !merged.has(p.number));
+    if (!open.length) return cb({ available: true, count: 0, prs: [] });
+    // For each open PR, fetch its reviews AND its detail (the list endpoint
+    // omits mergeable_state) in parallel, then derive a human status.
+    let pending = open.length;
+    const out = [];
+    open.forEach((listPr, i) => {
+      let reviews = null, detail = null, got = 0;
+      const done = () => {
+        if (++got < 2) return;
+        const p = detail && detail.number ? detail : listPr;
+        out[i] = {
+          number: listPr.number,
+          title: listPr.title,
+          user: listPr.user && listPr.user.login,
+          url: listPr.html_url,
+          status: prStatus(p, reviews),
+        };
+        if (--pending === 0) cb({ available: true, count: out.length, prs: out });
+      };
+      ghGet(`/repos/${WALL_REPO}/pulls/${listPr.number}/reviews`, (r) => { reviews = r; done(); });
+      ghGet(`/repos/${WALL_REPO}/pulls/${listPr.number}`, (d) => { detail = d; done(); });
     });
   });
-  req.on("error", () => cb({ available: false }));
-  req.on("timeout", () => { req.destroy(); cb({ available: false }); });
-  req.end();
 }
 
 http

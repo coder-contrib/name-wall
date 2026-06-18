@@ -203,8 +203,17 @@ async function queueTick() {
   const present = new Set();
   for (const pr of prs) {
     present.add(pr.number);
-    const sig = `${pr.user}|${pr.title}`;
-    const html = `<span class="pr-user">@${esc(pr.user || "")}</span> <span class="pr-title">${esc(pr.title || "")}</span> <span class="pr-num">#${pr.number}</span>`;
+    const st = pr.status || "queued";
+    const stLabel = {
+      reviewing: "reviewing",
+      "changes-requested": "changes requested",
+      "re-review": "re-reviewing",
+      approved: "approved",
+      conflicts: "conflicts",
+      queued: "queued",
+    }[st] || st;
+    const sig = `${pr.user}|${pr.title}|${st}`;
+    const html = `<span class="pr-user">@${esc(pr.user || "")}</span> <span class="pr-title">${esc(pr.title || "")}</span> <span class="pr-status st-${esc(st)}">${esc(stLabel)}</span> <span class="pr-num">#${pr.number}</span>`;
     let e = queueSeen.get(pr.number);
     if (!e) {
       const li = document.createElement("li");
