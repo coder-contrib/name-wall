@@ -168,3 +168,17 @@ footer a:hover { color: var(--coder-purple-400); }
 .activity:hover .activity-label { display: none; }
 .activity:hover .activity-admin { display: inline; }
 @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* ─── Join URL (prominent) ────────────────────────────────────── */
+header .join {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0.2rem 0 0.4rem;
+}
+header .join a {
+  color: var(--coder-cyan);
+  text-decoration: none;
+  border-bottom: 2px solid var(--coder-cyan);
+  text-shadow: 0 0 20px rgba(1, 242, 255, 0.5);
+}
+header .sub { color: var(--muted); margin: 0; }
