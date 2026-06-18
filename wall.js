@@ -161,32 +161,58 @@ setInterval(activityTick, 5000);
 // ─── PR queue panel (admin display only) ──────────────────────────────────────
 // Polls /api/pending; shows open PRs to the wall repo as a live queue so the
 // room can watch changes line up before they auto-merge. Auto-refreshes.
+const queueSeen = new Map(); // pr number -> { li, sig }
 async function queueTick() {
   const box = document.getElementById("queue");
   const list = document.getElementById("queue-list");
   const count = document.getElementById("queue-count");
   if (!box) return;
+  let q;
   try {
-    const q = await (await fetch("/api/pending")).json();
-    if (!q || !q.available) { box.hidden = true; return; }
-    box.hidden = false;
-    count.textContent = String(q.count);
-    // diff: keep it simple — rebuild the small list each poll
-    list.innerHTML = "";
-    if (!q.count) {
-      const li = document.createElement("li");
-      li.className = "queue-empty";
-      li.textContent = "All caught up";
-      list.appendChild(li);
-    } else {
-      for (const pr of q.prs) {
-        const li = document.createElement("li");
-        li.innerHTML = `<span class="pr-user">@${esc(pr.user || "")}</span> <span class="pr-title">${esc(pr.title || "")}</span> <span class="pr-num">#${pr.number}</span>`;
-        list.appendChild(li);
-      }
-    }
+    q = await (await fetch("/api/pending")).json();
   } catch {
-    box.hidden = true;
+    return; // transient; keep what's shown (no flicker)
+  }
+  if (!q || !q.available) { box.hidden = true; return; }
+  box.hidden = false;
+  count.textContent = String(q.count);
+
+  const prs = q.prs || [];
+  // empty-state node, toggled without wiping real rows
+  let emptyLi = list.querySelector(".queue-empty");
+  if (!prs.length) {
+    for (const [, e] of queueSeen) e.li.remove();
+    queueSeen.clear();
+    if (!emptyLi) {
+      emptyLi = document.createElement("li");
+      emptyLi.className = "queue-empty";
+      emptyLi.textContent = "All caught up";
+      list.appendChild(emptyLi);
+    }
+    return;
+  }
+  if (emptyLi) emptyLi.remove();
+
+  // Diff by PR number: add new rows (animate once), update changed ones in
+  // place, remove gone ones. No full rebuild → no flicker.
+  const present = new Set();
+  for (const pr of prs) {
+    present.add(pr.number);
+    const sig = `${pr.user}|${pr.title}`;
+    const html = `<span class="pr-user">@${esc(pr.user || "")}</span> <span class="pr-title">${esc(pr.title || "")}</span> <span class="pr-num">#${pr.number}</span>`;
+    let e = queueSeen.get(pr.number);
+    if (!e) {
+      const li = document.createElement("li");
+      li.innerHTML = html;
+      list.appendChild(li);
+      queueSeen.set(pr.number, { li, sig });
+    } else if (e.sig !== sig) {
+      e.li.innerHTML = html;
+      e.sig = sig;
+    }
+  }
+  for (const [num, e] of queueSeen) {
+    if (!present.has(num)) { e.li.remove(); queueSeen.delete(num); }
   }
 }
 queueTick();
