@@ -29,7 +29,7 @@ Create (or edit) exactly **one** file:
   "handle": "bpmct",
   "name": "Ben",
   "html": "<div class='wrap'><span class='glow'>Ben</span></div>",
-  "css": ".wrap{display:flex;align-items:center;justify-content:center;height:100%}.glow{font-size:3rem;font-weight:800;background:linear-gradient(90deg,#7511e2,#01f2ff,#66ffab,#7511e2);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:slide 4s linear infinite}@keyframes slide{to{background-position:300% 0}}"
+  "css": ".wrap{display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:#0b0a1f}.glow{font-size:clamp(1.4rem,9vw,3rem);font-weight:800;background:linear-gradient(90deg,#7511e2,#01f2ff,#66ffab,#7511e2);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:slide 4s linear infinite}@keyframes slide{to{background-position:300% 0}}"
 }
 ```
 
@@ -41,11 +41,22 @@ Create (or edit) exactly **one** file:
 - `css` — styles for the html, including `@keyframes` animations. Scope your
   selectors (e.g. a wrapper class) so they're self-contained.
 
-Each card renders inside a **sandboxed iframe** (~300×200), so:
-- You have a full HTML/CSS canvas and can animate/move freely.
+Each card renders inside a **sandboxed iframe** that is your name's own region
+on the wall. Design for it as a **responsive box**, not a fixed canvas:
+- The region is roughly **4:3** and its width varies with how many names are on
+  the wall — anywhere from about **100px wide (packed) to 340px wide (just a few
+  names)**. Your art must look good across that whole range.
+- **Fill the whole region.** Your `html`/`body` are already `width:100%;
+  height:100%` and centered — make your wrapper fill `100%/100%` too, and **set
+  your own background** (the region is transparent by default) so the card reads
+  as one tile, not a small graphic floating in an empty box.
+- **Size things relatively**, not in fixed px: use `%`, `vw`/`vh`, `clamp()`,
+  flexbox/grid inside your card. Avoid hard-coded pixel widths/heights that
+  assume one size — they clip or float when the region resizes.
 - **CSS only — no `<script>`, no JS, no external network/resource loads.**
   Inline everything; do not reference external URLs, fonts, or images.
-- Keep it self-contained; the card is a fixed size, so design within it.
+- Animate/move freely with CSS `@keyframes`; scope your selectors (a wrapper
+  class) so they stay self-contained.
 
 ### Simple fallback
 

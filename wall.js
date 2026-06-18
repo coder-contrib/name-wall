@@ -27,13 +27,16 @@ function docFor(n) {
     ? n.html
     : `<div class="fallback" style="color:${esc(n.color || "#fff")}">${esc(n.name || handle)}</div>`;
   const css = n.css || "";
+  // The iframe fills its whole region; html/body are 100%/100% so the author's
+  // art covers the box at any size. Authors design responsively (%, vw/vh, flex,
+  // clamp) against this box rather than a fixed pixel canvas.
   return `<!doctype html><html><head><meta charset="utf-8"><style>
-    html,body{margin:0;height:100%;overflow:hidden;background:transparent;
+    html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;
       display:flex;align-items:center;justify-content:center;
       font-family:'Lay Grotesk',system-ui,sans-serif;color:#e6e8ee;}
-    .fallback{font-size:2.4rem;font-weight:800;text-shadow:0 0 24px currentColor;}
-    .handle{position:absolute;bottom:6px;left:0;right:0;text-align:center;
-      font-family:'FT System Mono',monospace;font-size:.7rem;color:#8b93a7;}
+    .fallback{font-size:clamp(1.4rem,9vw,3rem);font-weight:800;text-shadow:0 0 24px currentColor;}
+    .handle{position:absolute;bottom:5%;left:0;right:0;text-align:center;
+      font-family:'FT System Mono',monospace;font-size:clamp(.5rem,3vw,.75rem);color:#8b93a7;}
     ${css}
   </style></head><body>${body}<div class="handle">@${handle}</div></body></html>`;
 }
@@ -80,23 +83,6 @@ async function tick() {
       frame.srcdoc = docFor(n);
       card.appendChild(frame);
       wall.appendChild(card);
-      // Contain-fit the fixed 320x200 canvas inside whatever size the card
-      // became (density/viewport driven): scale by the SMALLER of the width and
-      // height ratios so the whole canvas always fits — never clipped — then
-      // center it in the card with translate offsets.
-      const fit = () => {
-        const r = card.getBoundingClientRect();
-        if (!r.width || !r.height) return;
-        const s = Math.min(r.width / 320, r.height / 200);
-        frame.style.setProperty("--scale", String(s));
-        frame.style.setProperty("--tx", ((r.width  - 320 * s) / 2) + "px");
-        frame.style.setProperty("--ty", ((r.height - 200 * s) / 2) + "px");
-      };
-      fit();
-      if (window.ResizeObserver) {
-        const ro = new ResizeObserver(fit);
-        ro.observe(card);
-      }
       card.addEventListener("animationend", () => card.classList.remove("name--enter"), { once: true });
       seen.set(k, { card, frame, sig });
     } else if (entry.sig !== sig) {

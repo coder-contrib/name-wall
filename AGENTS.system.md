@@ -186,15 +186,17 @@ Other bot scripts in `name-wall/bot/`:
   drops query params). Hover the pill → "Admin · Wall of Fame".
 - The **PR queue panel** is pinned **bottom-right** (`position:fixed`, capped
   height with scroll) so it never overlaps the compact top-bar header.
-- **Scales to many names:** `#wall` is an auto-fit grid with density tiers
-  (cozy→medium→dense→packed→huge) set from the live count. Columns are
-  `minmax(--card, --card-max)` (NOT `1fr`) so a lone card can't stretch
-  edge-to-edge, and `--row` matches the 320×200 (1.6:1) canvas aspect ratio.
-- **Each card contain-fits its iframe:** the 320×200 canvas is scaled by
-  `min(cardW/320, cardH/200)` (the *smaller* ratio) and centered with translate
-  offsets, set from a ResizeObserver. Width-only scaling was the
-  full-width/clipped-render bug — contain-fit means the whole canvas always fits
-  in both dimensions, no clipping. 100+ names stay on one screen, no scroll.
+- **Layout is constraint-based, not a grid.** `#wall` is a centered `flex-wrap`
+  of name *regions*. Each region (`.name`) is a flex item clamped between
+  `--card-min`/`--card-max` (count-driven density tiers) with a fixed
+  `aspect-ratio` (~4:3) — so one name is a sane box (never full-width) and many
+  names shrink + wrap onto one screen, all keeping the same shape.
+- **The iframe IS the region** — `width/height:100%`, no fixed canvas, no
+  scale/transform. The author's `html/body` are `100%/100%`; their art fills the
+  box and is expected to size relatively (%, vw/vh, clamp, flex). This replaced
+  the old fixed 320×200 + contain-scale model, which left small art floating in
+  a big letterboxed box. AGENTS.md + the review prompt tell authors to fill the
+  region and set their own background.
 - **Rendering uses DOM diffing** (names and the PR queue) — never `innerHTML=""`
   + rebuild, or you get flicker (learned this twice). New items animate once;
   existing ones stay put; gone ones are removed.

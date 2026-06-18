@@ -110,15 +110,15 @@ footer code {
 
 main#wall {
   flex: 1;
-  display: grid;
-  /* Auto-fit as many cards as fit; --card sizes them and shrinks with count
-     (set on #wall by wall.js) so a large number of names still fits one screen.
-     max() with --card keeps a lone card from stretching edge-to-edge: columns
-     never grow past --card-max, so one name renders at a sane size. */
-  grid-template-columns: repeat(auto-fit, minmax(var(--card, 280px), var(--card-max, 360px)));
-  grid-auto-rows: var(--row, 180px);
-  place-content: center;
-  place-items: stretch;
+  /* Not a rigid grid: each name owns a REGION sized by constraints. The regions
+     flex-wrap and center; their width is clamped between --card-min and
+     --card-max (count-driven density tiers), so a single name is a sane box
+     (never full-width) and many names shrink + wrap to fit one screen. The art
+     fills its whole region (no fixed canvas, no letterbox). */
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
   gap: var(--gap, 1rem);
   padding: 1.5rem clamp(0.8rem, 3vw, 4rem);
   overflow: hidden;
@@ -165,8 +165,6 @@ footer .accent { color: var(--coder-purple-400); }
 /* ─── Footer link ─────────────────────────────────────────────── */
 footer a { color: inherit; text-decoration: none; border-bottom: 1px solid var(--border); }
 footer a:hover { color: var(--coder-purple-400); }
-
- 50% { opacity: 0.35; } }
 
 /* ─── Empty state ─────────────────────────────────────────────── */
 .wall-empty {
@@ -249,10 +247,16 @@ footer a:hover { color: var(--coder-purple-400); }
 .queue .queue-empty { color: var(--muted); border: none; }
 
 
-/* ─── Name cards (full HTML/CSS canvas per entry, sandboxed iframe) ─────────── */
+/* ─── Name regions (each entry is a responsive box; the art fills it) ──────── */
 #wall .name {
-  width: 100%;
-  height: 100%;
+  /* A flex item that is its own region. Width clamps between the density
+     min/max; the box keeps a stable aspect ratio so the art has a predictable
+     shape to design against, but it is NOT a fixed pixel canvas — the iframe
+     fills 100%/100% and the author's CSS lays out responsively inside it. */
+  flex: 1 1 var(--card-min, 240px);
+  min-width: var(--card-min, 240px);
+  max-width: var(--card-max, 320px);
+  aspect-ratio: var(--card-aspect, 4 / 3);
   border-radius: 14px;
   overflow: hidden;
   background: rgba(255,255,255,0.03);
@@ -260,6 +264,9 @@ footer a:hover { color: var(--coder-purple-400); }
   box-shadow: 0 6px 30px rgba(0,0,0,0.3);
 }
 #wall .name-frame {
+  /* The iframe IS the region — fills it completely, no fixed canvas, no
+     transform/scale, no letterbox. The author's html/body is told to be
+     width:100%;height:100% so their art covers the whole box at any size. */
   width: 100%;
   height: 100%;
   border: 0;
@@ -268,24 +275,11 @@ footer a:hover { color: var(--coder-purple-400); }
 }
 
 
-/* ─── Density tiers (more names → smaller cards, all on one screen) ──────────
-   --row is kept at ~0.625×--card-max so each cell matches the 320×200 (1.6:1)
-   canvas aspect ratio — the iframe contain-fits with no letterbox/clip. */
-body[data-density="cozy"]    #wall { --card: 280px; --card-max: 360px; --row: 225px; --gap: 1.1rem; }
-body[data-density="medium"]  #wall { --card: 220px; --card-max: 280px; --row: 175px; --gap: 0.9rem; }
-body[data-density="dense"]   #wall { --card: 170px; --card-max: 210px; --row: 131px; --gap: 0.7rem; }
-body[data-density="packed"]  #wall { --card: 130px; --card-max: 160px; --row: 100px; --gap: 0.55rem; }
-body[data-density="huge"]    #wall { --card: 100px; --card-max: 124px; --row: 78px;  --gap: 0.45rem; }
-
-
-/* Keep the iframe a stable logical canvas and let the card scale it. The frame
-   renders at a fixed 320x200 and is CONTAIN-scaled (min of width/height ratio,
-   set by JS) so the whole canvas always fits the card in both dimensions — no
-   vertical clipping when a card is wide, no horizontal clipping when it's tall.
-   Centered in the card via the translate offsets JS also sets. */
-#wall .name-frame {
-  width: 320px;
-  height: 200px;
-  transform-origin: top left;
-  transform: translate(var(--tx, 0px), var(--ty, 0px)) scale(var(--scale, 1));
-}
+/* ─── Density tiers (more names → smaller regions, all wrap onto one screen) ──
+   Only the min/max width + gap change with count; aspect ratio stays constant
+   so a name designed once looks right whether the wall has 1 or 200 entries. */
+body[data-density="cozy"]    #wall { --card-min: 260px; --card-max: 340px; --gap: 1.2rem; }
+body[data-density="medium"]  #wall { --card-min: 210px; --card-max: 280px; --gap: 1rem; }
+body[data-density="dense"]   #wall { --card-min: 165px; --card-max: 215px; --gap: 0.8rem; }
+body[data-density="packed"]  #wall { --card-min: 130px; --card-max: 165px; --gap: 0.6rem; }
+body[data-density="huge"]    #wall { --card-min: 100px; --card-max: 128px; --gap: 0.45rem; }
