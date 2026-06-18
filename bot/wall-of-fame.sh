@@ -19,7 +19,7 @@ if [ -z "${CODER_SESSION_TOKEN:-}" ]; then
   CODER_BIN=$(ls /tmp/coder.*/coder 2>/dev/null | head -1)
   [ -n "$CODER_BIN" ] && export CODER_SESSION_TOKEN=$("$CODER_BIN" tokens create --lifetime 24h 2>/dev/null || true)
 fi
-export CODER_URL="${CODER_URL:-http://localhost:3000}"
+export CODER_URL="${CODER_URL:-http://10.42.0.1:3000}"  # in-pod address of the Coder server
 
 echo "[wall-of-fame] serving merged main — open http://localhost:$PORT/?admin full-screen"
 PORT="$PORT" node serve.js &

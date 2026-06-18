@@ -8,6 +8,19 @@ You must be `gh` authenticated as a **coder-contrib member** with PR write
 (`gh auth status`). The workshop template installs `gh` and logs it in from
 Coder's GitHub external auth automatically.
 
+## Live "active now" indicator
+
+The Wall of Fame shows a green "● N active now" pill (Coder users seen in the
+last 5 min). It needs a Coder API token — export one in the admin workspace
+before running:
+
+```sh
+export CODER_SESSION_TOKEN=$(coder tokens create --lifetime 24h)
+# (CODER_URL defaults to http://10.42.0.1:3000, the in-pod Coder address)
+```
+
+Without a token the wall still works; the pill is just hidden.
+
 ## 1. Wall of Fame (screen-share)
 
 ```sh
