@@ -148,7 +148,22 @@ a projected shared screen). Legacy `{name, color}` still works.
 The loop: attendee logs in (any GitHub) → role bot grants `agents-access` →
 they tell the agent "make my name a cookie" → agent forks the repo, writes
 their JSON, shows the preview, opens a PR from their fork → admin merge bot
-auto-approves + squash-merges → name lights up on the projected wall.
+**reviews** it (agent-in-the-loop, not blanket approve) → approves + squash-merges
+clean entries; **requests changes** on bad ones → name lights up on the wall.
+
+**Merge bot review (`bot/merge-bot.sh`):** per open PR it (1) mechanically
+gates that *only* `names/*.json` changed (hard block, runs before any LLM),
+then (2) asks Claude (`https://api.anthropic.com/v1/messages`, `claude-sonnet-4-6`,
+`--max-time 25` so a stalled call fails closed) for a strict JSON verdict on the
+diff. Approve → approve + `--squash --admin` merge, and the PR# is appended to
+`MERGED_FILE` so `/api/pending` drops it from the queue instantly. Reject →
+`gh pr review --request-changes` with the reason, **once per head commit**
+(tracked as `PR#@sha` in `REVIEWED_FILE` to avoid spam); the bot keeps polling,
+so when the author pushes a fix the SHA changes and it's re-reviewed (and merged)
+automatically. The review prompt allows fun handles (does NOT reject on
+filename/handle mismatch) and blocks `<script>`, event handlers, external URLs,
+`@import`, and abusive/impersonating content. Needs `ANTHROPIC_API_KEY`
+(or `NO_REVIEW=1` for mechanical-only); refuses to run as a blanket approver.
 
 **Admin side — one command** (run in the admin workspace, e.g. `olive-locust-63`):
 ```sh
@@ -169,10 +184,17 @@ Other bot scripts in `name-wall/bot/`:
 - Admin mode + the green "active now" pill auto-enable when the server has a
   Coder token (`/api/active` available) — not via a URL flag (the app-proxy URL
   drops query params). Hover the pill → "Admin · Wall of Fame".
+- The **PR queue panel** is pinned **bottom-right** (`position:fixed`, capped
+  height with scroll) so it never overlaps the compact top-bar header.
 - **Scales to many names:** `#wall` is an auto-fit grid with density tiers
-  (cozy→medium→dense→packed→huge) set from the live count, and each iframe is a
-  320×200 canvas scaled to its card via ResizeObserver. 100+ names stay on one
-  screen, no scroll. serve.js reads the dir per request (~2ms at 80 names).
+  (cozy→medium→dense→packed→huge) set from the live count. Columns are
+  `minmax(--card, --card-max)` (NOT `1fr`) so a lone card can't stretch
+  edge-to-edge, and `--row` matches the 320×200 (1.6:1) canvas aspect ratio.
+- **Each card contain-fits its iframe:** the 320×200 canvas is scaled by
+  `min(cardW/320, cardH/200)` (the *smaller* ratio) and centered with translate
+  offsets, set from a ResizeObserver. Width-only scaling was the
+  full-width/clipped-render bug — contain-fit means the whole canvas always fits
+  in both dimensions, no clipping. 100+ names stay on one screen, no scroll.
 - **Rendering uses DOM diffing** (names and the PR queue) — never `innerHTML=""`
   + rebuild, or you get flicker (learned this twice). New items animate once;
   existing ones stay put; gone ones are removed.

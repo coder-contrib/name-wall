@@ -80,11 +80,17 @@ async function tick() {
       frame.srcdoc = docFor(n);
       card.appendChild(frame);
       wall.appendChild(card);
-      // Scale the fixed 320x200 canvas to fill whatever size the card became
-      // (density/viewport driven), so big fonts and absolute layouts shrink to fit.
+      // Contain-fit the fixed 320x200 canvas inside whatever size the card
+      // became (density/viewport driven): scale by the SMALLER of the width and
+      // height ratios so the whole canvas always fits — never clipped — then
+      // center it in the card with translate offsets.
       const fit = () => {
         const r = card.getBoundingClientRect();
-        if (r.width) frame.style.setProperty("--scale", String(r.width / 320));
+        if (!r.width || !r.height) return;
+        const s = Math.min(r.width / 320, r.height / 200);
+        frame.style.setProperty("--scale", String(s));
+        frame.style.setProperty("--tx", ((r.width  - 320 * s) / 2) + "px");
+        frame.style.setProperty("--ty", ((r.height - 200 * s) / 2) + "px");
       };
       fit();
       if (window.ResizeObserver) {

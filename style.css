@@ -112,8 +112,10 @@ main#wall {
   flex: 1;
   display: grid;
   /* Auto-fit as many cards as fit; --card sizes them and shrinks with count
-     (set on #wall by wall.js) so a large number of names still fits one screen. */
-  grid-template-columns: repeat(auto-fit, minmax(var(--card, 280px), 1fr));
+     (set on #wall by wall.js) so a large number of names still fits one screen.
+     max() with --card keeps a lone card from stretching edge-to-edge: columns
+     never grow past --card-max, so one name renders at a sane size. */
+  grid-template-columns: repeat(auto-fit, minmax(var(--card, 280px), var(--card-max, 360px)));
   grid-auto-rows: var(--row, 180px);
   place-content: center;
   place-items: stretch;
@@ -205,15 +207,18 @@ footer a:hover { color: var(--coder-purple-400); }
 /* ─── PR queue panel (admin) ──────────────────────────────────── */
 .queue {
   position: fixed;
-  top: 1.2rem;
+  bottom: 1.2rem;
   right: 1.2rem;
   width: min(320px, 30vw);
+  max-height: 42vh;
+  overflow-y: auto;
   background: rgba(21, 24, 33, 0.92);
   border: 1px solid var(--border);
   border-radius: 14px;
   padding: 1rem 1.1rem;
   backdrop-filter: blur(8px);
   box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  z-index: 20;
 }
 .queue-title {
   font-family: "FT System Mono", monospace;
@@ -263,21 +268,24 @@ footer a:hover { color: var(--coder-purple-400); }
 }
 
 
-/* ─── Density tiers (more names → smaller cards, all on one screen) ────────── */
-body[data-density="cozy"]    #wall { --card: 280px; --row: 180px; --gap: 1.1rem; }
-body[data-density="medium"]  #wall { --card: 220px; --row: 140px; --gap: 0.9rem; }
-body[data-density="dense"]   #wall { --card: 170px; --row: 110px; --gap: 0.7rem; }
-body[data-density="packed"]  #wall { --card: 130px; --row: 88px;  --gap: 0.55rem; }
-body[data-density="huge"]    #wall { --card: 100px; --row: 68px;  --gap: 0.45rem; }
+/* ─── Density tiers (more names → smaller cards, all on one screen) ──────────
+   --row is kept at ~0.625×--card-max so each cell matches the 320×200 (1.6:1)
+   canvas aspect ratio — the iframe contain-fits with no letterbox/clip. */
+body[data-density="cozy"]    #wall { --card: 280px; --card-max: 360px; --row: 225px; --gap: 1.1rem; }
+body[data-density="medium"]  #wall { --card: 220px; --card-max: 280px; --row: 175px; --gap: 0.9rem; }
+body[data-density="dense"]   #wall { --card: 170px; --card-max: 210px; --row: 131px; --gap: 0.7rem; }
+body[data-density="packed"]  #wall { --card: 130px; --card-max: 160px; --row: 100px; --gap: 0.55rem; }
+body[data-density="huge"]    #wall { --card: 100px; --card-max: 124px; --row: 78px;  --gap: 0.45rem; }
 
 
 /* Keep the iframe a stable logical canvas and let the card scale it. The frame
-   renders at a fixed size and is scaled to fill the (possibly small) card, so
-   any content — big fonts, absolute positioning — shrinks proportionally. */
+   renders at a fixed 320x200 and is CONTAIN-scaled (min of width/height ratio,
+   set by JS) so the whole canvas always fits the card in both dimensions — no
+   vertical clipping when a card is wide, no horizontal clipping when it's tall.
+   Centered in the card via the translate offsets JS also sets. */
 #wall .name-frame {
   width: 320px;
   height: 200px;
   transform-origin: top left;
-  /* scaled by JS-set --scale so the 320x200 canvas fills the card cell */
-  transform: scale(var(--scale, 1));
+  transform: translate(var(--tx, 0px), var(--ty, 0px)) scale(var(--scale, 1));
 }
