@@ -283,3 +283,69 @@ body[data-density="medium"]  #wall { --card-min: 210px; --card-max: 280px; --gap
 body[data-density="dense"]   #wall { --card-min: 165px; --card-max: 215px; --gap: 0.8rem; }
 body[data-density="packed"]  #wall { --card-min: 130px; --card-max: 165px; --gap: 0.6rem; }
 body[data-density="huge"]    #wall { --card-min: 100px; --card-max: 128px; --gap: 0.45rem; }
+
+
+/* ─── Attendee roster (admin) — mirrors the PR queue, bottom-left ──────────── */
+.roster {
+  position: fixed;
+  bottom: 1.2rem;
+  left: 1.2rem;
+  width: min(300px, 28vw);
+  max-height: 46vh;
+  overflow-y: auto;
+  background: rgba(21, 24, 33, 0.92);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+  z-index: 20;
+}
+.roster-title {
+  font-family: "FT System Mono", monospace;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.6rem;
+  color: var(--coder-cyan);
+}
+.roster-title #roster-count {
+  background: var(--coder-purple-600);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0 0.5em;
+  margin-left: 0.3em;
+}
+.roster ul { list-style: none; margin: 0; padding: 0; }
+.roster li.roster-row {
+  font-size: 0.85rem;
+  padding: 0.35em 0;
+  border-bottom: 1px solid var(--border);
+  display: flex; gap: 0.5em; align-items: center;
+}
+.roster li.roster-row:last-child { border-bottom: none; }
+.roster .r-dot {
+  width: 8px; height: 8px; border-radius: 50%; flex: 0 0 auto;
+  background: var(--muted);
+}
+.roster .r-dot.on {
+  background: var(--coder-green, #66ffab);
+  box-shadow: 0 0 8px var(--coder-green, #66ffab);
+}
+.roster .r-dot.off { background: #3a3f4b; }
+.roster .r-user {
+  flex: 1; color: var(--coder-white); font-weight: 600;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.roster .r-badge {
+  font-family: "FT System Mono", monospace;
+  font-size: 0.7rem;
+  padding: 0.05em 0.5em;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+.roster .r-badge.ok { color: var(--coder-green, #66ffab); border: 1px solid rgba(102,255,171,0.4); }
+.roster .r-badge.need {
+  color: #ffd166; border: 1px solid rgba(255,209,102,0.5);
+  background: rgba(255,209,102,0.08); cursor: help;
+}
+.roster .roster-empty { color: var(--muted); border: none; font-size: 0.85rem; }

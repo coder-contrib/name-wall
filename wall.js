@@ -222,3 +222,74 @@ async function queueTick() {
 }
 queueTick();
 setInterval(queueTick, 3000);
+
+
+// ─── Attendee roster (admin display only) ─────────────────────────────────────
+// Polls /api/members; shows everyone who's logged in, an online dot, and flags
+// who still needs the agents-access role (the role bot grants it automatically,
+// so this is a live health view). Hover a "needs role" row for the detail.
+const rosterSeen = new Map(); // username -> { li, sig }
+async function rosterTick() {
+  const box = document.getElementById("roster");
+  const list = document.getElementById("roster-list");
+  const count = document.getElementById("roster-count");
+  if (!box) return;
+  let m;
+  try {
+    m = await (await fetch("/api/members")).json();
+  } catch {
+    return; // transient; keep what's shown
+  }
+  if (!m || !m.available) { box.hidden = true; return; }
+  box.hidden = false;
+  const members = (m.members || []).slice().sort((a, b) => {
+    // online first, then those needing a role, then alphabetical
+    if (a.online !== b.online) return a.online ? -1 : 1;
+    if (a.has_agents !== b.has_agents) return a.has_agents ? 1 : -1;
+    return a.username.localeCompare(b.username);
+  });
+  count.textContent = String(members.length);
+
+  let emptyLi = list.querySelector(".roster-empty");
+  if (!members.length) {
+    for (const [, e] of rosterSeen) e.li.remove();
+    rosterSeen.clear();
+    if (!emptyLi) {
+      emptyLi = document.createElement("li");
+      emptyLi.className = "roster-empty";
+      emptyLi.textContent = "No attendees yet";
+      list.appendChild(emptyLi);
+    }
+    return;
+  }
+  if (emptyLi) emptyLi.remove();
+
+  const present = new Set();
+  for (const u of members) {
+    present.add(u.username);
+    const sig = `${u.online}|${u.has_agents}|${u.is_admin}`;
+    const dot = `<span class="r-dot ${u.online ? "on" : "off"}"></span>`;
+    const badge = u.has_agents
+      ? `<span class="r-badge ok">${u.is_admin ? "admin" : "agent"}</span>`
+      : `<span class="r-badge need" title="Needs the agents-access role — the role bot grants it automatically; if this lingers, check the role bot.">needs role</span>`;
+    const html = `${dot}<span class="r-user">@${esc(u.username)}</span>${badge}`;
+    let e = rosterSeen.get(u.username);
+    if (!e) {
+      const li = document.createElement("li");
+      li.className = "roster-row";
+      li.innerHTML = html;
+      list.appendChild(li);
+      rosterSeen.set(u.username, { li, sig });
+    } else if (e.sig !== sig) {
+      e.li.innerHTML = html;
+      e.sig = sig;
+    }
+    // keep DOM order roughly matching the sort
+    list.appendChild(rosterSeen.get(u.username).li);
+  }
+  for (const [name, e] of rosterSeen) {
+    if (!present.has(name)) { e.li.remove(); rosterSeen.delete(name); }
+  }
+}
+rosterTick();
+setInterval(rosterTick, 4000);

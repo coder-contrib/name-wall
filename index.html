@@ -25,6 +25,12 @@
     </div>
   </header>
   <main id="wall" aria-live="polite"></main>
+  <!-- Admin roster (admin display only): who's logged in + who still needs the
+       agents-access role. Hidden unless the server has Coder API access. -->
+  <aside id="roster" class="roster" hidden>
+    <div class="roster-title">Attendees <span id="roster-count">0</span></div>
+    <ul id="roster-list"></ul>
+  </aside>
   <aside id="queue" class="queue" hidden>
     <div class="queue-title">PR Queue <span id="queue-count">0</span></div>
     <ul id="queue-list"></ul>

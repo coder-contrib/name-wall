@@ -102,6 +102,50 @@ function readActive(cb) {
   req.end();
 }
 
+// Small helper: GET a Coder API path with the admin token, parse JSON.
+function coderGet(p, cb) {
+  if (!CODER_TOKEN) return cb(null);
+  const url = new URL(CODER_URL + p);
+  const lib = url.protocol === "https:" ? https : http;
+  const req = lib.request(url, { headers: { "Coder-Session-Token": CODER_TOKEN }, timeout: 4000 }, (r) => {
+    let body = "";
+    r.on("data", (c) => (body += c));
+    r.on("end", () => { try { cb(JSON.parse(body)); } catch { cb(null); } });
+  });
+  req.on("error", () => cb(null));
+  req.on("timeout", () => { req.destroy(); cb(null); });
+  req.end();
+}
+
+// Admin roster: every org member, whether they hold the agents-access role (so
+// the Agents UI works) and whether they're online now. Lets the host see who
+// just logged in and who still needs the role (the role bot grants it, but this
+// surfaces lag/failures). Needs the admin Coder token; else {available:false}.
+const AGENTS_ROLE = process.env.AGENTS_ROLE || "agents-access";
+function readMembers(cb) {
+  if (!CODER_TOKEN) return cb({ available: false });
+  coderGet("/api/v2/users/me", (me) => {
+    const org = me && me.organization_ids && me.organization_ids[0];
+    if (!org) return cb({ available: false });
+    let members = null, online = null;
+    const done = () => {
+      if (members === null || online === null) return;
+      const list = (members || []).map((m) => {
+        const roles = (m.roles || []).map((r) => r.name);
+        return {
+          username: m.username,
+          has_agents: roles.includes(AGENTS_ROLE) || roles.includes("organization-admin"),
+          is_admin: roles.includes("organization-admin"),
+          online: online.has(m.username),
+        };
+      }).filter((m) => !ACTIVE_EXCLUDE.has(m.username));
+      cb({ available: true, count: list.length, members: list });
+    };
+    coderGet("/api/v2/organizations/" + org + "/members", (ms) => { members = ms || []; done(); });
+    readActive((a) => { online = new Set(a && a.available ? a.users : []); done(); });
+  });
+}
+
 // Query GitHub for open PRs to the wall repo (the live "PR queue"). Needs a
 // GitHub token in the env (GITHUB_TOKEN), present on the admin display.
 const GH_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "";
@@ -167,6 +211,13 @@ http
     }
     if (req.url === "/api/pending") {
       readPending((data) => {
+        res.writeHead(200, { "Content-Type": TYPES[".json"] });
+        res.end(JSON.stringify(data));
+      });
+      return;
+    }
+    if (req.url === "/api/members") {
+      readMembers((data) => {
         res.writeHead(200, { "Content-Type": TYPES[".json"] });
         res.end(JSON.stringify(data));
       });
