@@ -27,20 +27,20 @@ Create (or edit) exactly **one** file: `names/<their-github-handle>.json`
   `names/<handle>.json`.
 - `color` — a CSS hex color like `#3b82f6`. Map plain requests to hex:
 
-  | They say | Use |
-  |----------|-----|
-  | blue | `#3b82f6` |
-  | red | `#ef4444` |
-  | green | `#22c55e` |
-  | purple | `#a855f7` |
-  | orange | `#f97316` |
-  | pink | `#ec4899` |
-  | yellow | `#eab308` |
-  | teal / cyan | `#06b6d4` |
-  | white / default | `#e6e8ee` |
+  | They say | Use (Coder brand) |
+  |----------|-------------------|
+  | blue | `#4893fc` |
+  | purple | `#7511e2` |
+  | light purple / lavender | `#bc7cff` |
+  | magenta / pink | `#f08dff` |
+  | cyan | `#01f2ff` |
+  | green | `#66ffab` |
+  | coral / orange | `#ff8067` |
+  | rust | `#a13000` |
+  | white / default | `#ffffff` |
 
   If they ask for "rainbow", a gradient, or anything fancy, just pick the
-  closest single hex — the wall renders one color per name.
+  closest single hex — the wall renders one color per name. Prefer the Coder brand colors above.
 
 ## Rules
 
