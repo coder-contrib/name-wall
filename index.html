@@ -8,12 +8,16 @@
 </head>
 <body>
   <header>
-    <div class="admin-badge">● ADMIN · Wall of Fame</div>
     <img class="logo" src="assets/Logo-white.svg" alt="Coder" />
     <h1>Wall of Names</h1>
     <p>Tell the agent <code>"make my name blue"</code> — then open a PR.</p>
+    <!-- Single green pill: shows "● N active now". On hover (admin display) it
+         reveals "Admin · Wall of Fame". Hidden unless the server has Coder API
+         access (the token-bearing admin display). -->
     <div id="activity" class="activity" hidden>
-      <span class="dot"></span><span id="active-count">0</span> active now
+      <span class="dot"></span>
+      <span class="activity-label"><span id="active-count">0</span> active now</span>
+      <span class="activity-admin">Admin · Wall of Fame</span>
     </div>
   </header>
   <main id="wall" aria-live="polite"></main>
