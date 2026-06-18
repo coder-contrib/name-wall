@@ -119,12 +119,12 @@ request_changes() {
     echo "[merge-bot] DRY_RUN would request changes on #$num — $reason"
   else
     gh pr review "$num" --repo "$REPO" --request-changes --body \
-"Thanks for adding yourself to the wall! The workshop bot can't merge this yet:
+"This entry can't merge yet:
 
 > ${reason}
 
-Tweak your \`names/<handle>.json\` (CSS animations, colors, and emoji are all welcome — just no \`<script>\`, event handlers, or external URLs) and push again. I'll re-review automatically. 💜" 2>/dev/null \
-      && echo "[merge-bot] ✍️  requested changes on #$num — $reason"
+Edit your \`names/<handle>.json\` and push again — CSS animations and colors are welcome; no \`<script>\`, event handlers, or external URLs. It will re-review automatically." 2>/dev/null \
+      && echo "[merge-bot] requested changes on #$num — $reason"
   fi
   echo "$key" >> "$REVIEWED_FILE"
 }
@@ -133,12 +133,12 @@ approve_and_merge() {
   local num="$1"
   if [ "$DRY_RUN" = "1" ]; then echo "[merge-bot] DRY_RUN would approve+merge #$num"; return; fi
   gh pr review "$num" --repo "$REPO" --approve \
-    --body "Reviewed by the workshop bot — welcome to the wall! 🎉" 2>/dev/null
+    --body "Approved by the workshop review bot. Your name is on the wall." 2>/dev/null
   if gh pr merge "$num" --repo "$REPO" --squash --admin --delete-branch=false 2>/dev/null; then
     echo "$num" >> "$MERGED_FILE"   # let the live queue drop it immediately
-    echo "[merge-bot] ✅ merged #$num"
+    echo "[merge-bot] merged #$num"
   else
-    echo "[merge-bot] ⚠️  merge failed for #$num (retry next pass)"
+    echo "[merge-bot] merge failed for #$num (retry next pass)"
   fi
 }
 
@@ -146,12 +146,12 @@ while true; do
   prs=$(gh pr list --repo "$REPO" --state open --json number --jq 'sort_by(.number) | .[].number' 2>/dev/null)
   for num in $prs; do
     if ! pr_changed_only_names "$num"; then
-      echo "[merge-bot] ⏭  skip #$num — touches files outside names/"
+      echo "[merge-bot] skip #$num — touches files outside names/"
       continue
     fi
     verdict=$(agent_review "$num")
     if [ "$verdict" = "approve" ]; then
-      echo "[merge-bot] 🤖 approved #$num"
+      echo "[merge-bot] approved #$num"
       approve_and_merge "$num"
     else
       request_changes "$num" "${verdict#reject:}"

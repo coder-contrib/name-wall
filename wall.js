@@ -55,9 +55,10 @@ function densityFor(n) {
 async function tick() {
   let names;
   try {
-    names = await (await fetch("/api/names")).json();
+    names = await (await fetch("/api/names", { cache: "no-store" })).json();
+    loaded = true; // first good fetch — switch to the steady cadence
   } catch {
-    return; // transient; keep what's on screen
+    return; // transient (e.g. cold app-proxy tunnel); keep what's on screen
   }
 
   // Clear any non-card content (e.g. the initial empty-state node) so the
@@ -102,15 +103,19 @@ async function tick() {
   countEl.textContent = String(names.length);
   document.body.dataset.density = densityFor(names.length);
 
-  // Empty state (only when there are genuinely zero names)
+  // Empty state. Before the first successful load show a calm "Connecting"
+  // message (the app-proxy tunnel may still be warming); only show the real
+  // "no names yet" prompt once we've actually loaded and the wall is empty.
   let empty = wall.querySelector(".wall-empty");
   if (!names.length && !wall.querySelector(".name")) {
     if (!empty) {
       empty = document.createElement("div");
       empty.className = "wall-empty";
-      empty.textContent = "No names yet — be the first! Ask the agent to make your name come alive.";
       wall.appendChild(empty);
     }
+    empty.textContent = loaded
+      ? "No names on the wall yet. Tell the agent to add yours."
+      : "Connecting to the wall…";
   } else if (empty) {
     empty.remove();
   }
@@ -122,14 +127,22 @@ function esc(s) {
   }[c]));
 }
 
-tick();
-setInterval(tick, 3000);
+// On a freshly-started display the Coder app-proxy tunnel can be cold, so the
+// first fetch may fail or lag. Poll fast (600ms) until the first success, then
+// settle to a calm 3s cadence — so the wall paints as soon as the tunnel is
+// ready instead of waiting a full 3s, without hammering once it's up.
+let loaded = false;
+(function pollNames() {
+  tick().finally(() => {
+    setTimeout(pollNames, loaded ? 3000 : 600);
+  });
+})();
 
 
 // ─── Live activity indicator (admin display only) ─────────────────────────────
-// Polls /api/active; shows "🟢 N active now" when the server has a Coder token
+// Polls /api/active; shows "N active now" when the server has Coder API access
 // (the Wall-of-Fame display). On attendee previews there's no token so it stays
-// hidden. "Active" = Coder last_seen_at within the last 5 minutes.
+// hidden. "Active" = someone with a running workshop workspace right now.
 async function activityTick() {
   const box = document.getElementById("activity");
   const num = document.getElementById("active-count");
