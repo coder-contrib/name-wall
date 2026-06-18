@@ -8,13 +8,16 @@
 </head>
 <body>
   <header>
-    <img class="logo" src="assets/Logo-white.svg" alt="Coder" />
-    <h1>Wall of Names</h1>
-    <p class="join">Log in at <a href="https://workshop.cdr.dev" target="_blank" rel="noopener">workshop.cdr.dev</a></p>
-    <p class="sub">Then tell the agent <code>"make my name blue"</code> and open a PR.</p>
-    <!-- Single green pill: shows "● N active now". On hover (admin display) it
-         reveals "Admin · Wall of Fame". Hidden unless the server has Coder API
-         access (the token-bearing admin display). -->
+    <div class="brand">
+      <img class="logo" src="assets/Logo-white.svg" alt="Coder" />
+      <span class="wordmark">Wall of Names</span>
+    </div>
+    <div class="cta">
+      <span class="cta-step">1 · Log in at <a href="https://workshop.cdr.dev" target="_blank" rel="noopener">workshop.cdr.dev</a></span>
+      <span class="cta-step">2 · Tell the agent <code>“make my name blue”</code> → open a PR</span>
+    </div>
+    <!-- Activity pill: "● N active now"; hover (admin display) → "Admin · Wall of Fame".
+         Hidden unless the server has Coder API access (admin display). -->
     <div id="activity" class="activity" hidden>
       <span class="dot"></span>
       <span class="activity-label"><span id="active-count">0</span> active now</span>
