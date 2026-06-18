@@ -248,7 +248,8 @@ async function rosterTick() {
     if (a.has_agents !== b.has_agents) return a.has_agents ? 1 : -1;
     return a.username.localeCompare(b.username);
   });
-  count.textContent = String(members.length);
+  const onlineCount = members.filter((u) => u.online).length;
+  count.textContent = onlineCount + "/" + members.length;
 
   let emptyLi = list.querySelector(".roster-empty");
   if (!members.length) {

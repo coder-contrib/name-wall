@@ -291,8 +291,6 @@ body[data-density="huge"]    #wall { --card-min: 100px; --card-max: 128px; --gap
   bottom: 1.2rem;
   left: 1.2rem;
   width: min(300px, 28vw);
-  max-height: 46vh;
-  overflow-y: auto;
   background: rgba(21, 24, 33, 0.92);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -305,17 +303,38 @@ body[data-density="huge"]    #wall { --card-min: 100px; --card-max: 128px; --gap
   font-family: "FT System Mono", monospace;
   font-size: 0.9rem;
   font-weight: 500;
-  margin-bottom: 0.6rem;
   color: var(--coder-cyan);
+  display: flex; align-items: center; gap: 0.4em;
 }
 .roster-title #roster-count {
   background: var(--coder-purple-600);
   color: #fff;
   border-radius: 999px;
   padding: 0 0.5em;
-  margin-left: 0.3em;
 }
-.roster ul { list-style: none; margin: 0; padding: 0; }
+.roster-hint {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--muted);
+  opacity: 0.8;
+}
+.roster:hover .roster-hint { opacity: 0; }
+/* List collapsed by default, revealed on hover; capped height + scroll so 100+
+   participants don't overwhelm the screen. */
+.roster ul {
+  list-style: none; margin: 0; padding: 0;
+  max-height: 0;
+  overflow-y: auto;
+  opacity: 0;
+  transition: max-height 0.25s ease, opacity 0.2s ease, margin-top 0.25s ease;
+}
+.roster:hover ul {
+  max-height: min(60vh, 28rem);
+  opacity: 1;
+  margin-top: 0.6rem;
+}
+.roster ul::-webkit-scrollbar { width: 6px; }
+.roster ul::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 .roster li.roster-row {
   font-size: 0.85rem;
   padding: 0.35em 0;
