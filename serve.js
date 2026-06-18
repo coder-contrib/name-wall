@@ -22,10 +22,11 @@ const PORT = process.env.PORT || 8080;
 const CODER_URL = (process.env.CODER_URL || "http://localhost:3000").replace(/\/$/, "");
 const CODER_TOKEN = process.env.CODER_SESSION_TOKEN || process.env.CODER_TOKEN || "";
 const ACTIVE_WINDOW_MS = 5 * 60 * 1000; // "active now" = activity in last 5 min
-// Owners to exclude from the "active now" count (workshop hosts/admins, not
-// attendees). Comma-separated usernames in ACTIVE_EXCLUDE; defaults to admin.
+// Owners to exclude from the "active now" count (workshop hosts/admins and the
+// prebuild pool, not attendees). Comma-separated usernames in ACTIVE_EXCLUDE;
+// defaults to admin + the "prebuilds" system owner.
 const ACTIVE_EXCLUDE = new Set(
-  (process.env.ACTIVE_EXCLUDE || "admin").split(",").map((s) => s.trim()).filter(Boolean)
+  (process.env.ACTIVE_EXCLUDE || "admin,prebuilds").split(",").map((s) => s.trim()).filter(Boolean)
 );
 
 const TYPES = {
