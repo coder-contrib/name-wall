@@ -1,5 +1,7 @@
 # Workshop admin: Wall of Fame + merge bot
 
+> Operator/"making the sausage" notes for the whole box live in [`AGENTS.system.md`](../AGENTS.system.md) at the repo root.
+
 These two scripts run on the **admin** side (the workshop host's workspace, e.g.
 `olive-locust-63`). They turn merged contributions into the live "Wall of Fame"
 you screen-share, and auto-merge attendee PRs.
