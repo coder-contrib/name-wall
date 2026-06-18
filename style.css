@@ -82,12 +82,16 @@ footer code {
 
 main#wall {
   flex: 1;
-  display: flex;
-  flex-wrap: wrap;
-  align-content: center;
-  justify-content: center;
-  gap: 1.1rem 1.8rem;
-  padding: 2rem clamp(1rem, 5vw, 6rem);
+  display: grid;
+  /* Auto-fit as many cards as fit; --card sizes them and shrinks with count
+     (set on #wall by wall.js) so a large number of names still fits one screen. */
+  grid-template-columns: repeat(auto-fit, minmax(var(--card, 280px), 1fr));
+  grid-auto-rows: var(--row, 180px);
+  place-content: center;
+  place-items: stretch;
+  gap: var(--gap, 1rem);
+  padding: 1.5rem clamp(0.8rem, 3vw, 4rem);
+  overflow: hidden;
 }
 
 .name {
@@ -227,14 +231,13 @@ header .sub { color: var(--muted); margin: 0; }
 
 /* ─── Name cards (full HTML/CSS canvas per entry, sandboxed iframe) ─────────── */
 #wall .name {
-  width: clamp(220px, 22vw, 320px);
-  height: clamp(140px, 18vw, 200px);
-  border-radius: 16px;
+  width: 100%;
+  height: 100%;
+  border-radius: 14px;
   overflow: hidden;
   background: rgba(255,255,255,0.03);
   border: 1px solid var(--border);
-  box-shadow: 0 6px 30px rgba(0,0,0,0.35);
-  /* keep the enter pop animation */
+  box-shadow: 0 6px 30px rgba(0,0,0,0.3);
 }
 #wall .name-frame {
   width: 100%;
@@ -242,4 +245,24 @@ header .sub { color: var(--muted); margin: 0; }
   border: 0;
   display: block;
   background: transparent;
+}
+
+
+/* ─── Density tiers (more names → smaller cards, all on one screen) ────────── */
+body[data-density="cozy"]    #wall { --card: 280px; --row: 180px; --gap: 1.1rem; }
+body[data-density="medium"]  #wall { --card: 220px; --row: 140px; --gap: 0.9rem; }
+body[data-density="dense"]   #wall { --card: 170px; --row: 110px; --gap: 0.7rem; }
+body[data-density="packed"]  #wall { --card: 130px; --row: 88px;  --gap: 0.55rem; }
+body[data-density="huge"]    #wall { --card: 100px; --row: 68px;  --gap: 0.45rem; }
+
+
+/* Keep the iframe a stable logical canvas and let the card scale it. The frame
+   renders at a fixed size and is scaled to fill the (possibly small) card, so
+   any content — big fonts, absolute positioning — shrinks proportionally. */
+#wall .name-frame {
+  width: 320px;
+  height: 200px;
+  transform-origin: top left;
+  /* scaled by JS-set --scale so the 320x200 canvas fills the card cell */
+  transform: scale(var(--scale, 1));
 }

@@ -38,6 +38,17 @@ function docFor(n) {
   </style></head><body>${body}<div class="handle">@${handle}</div></body></html>`;
 }
 
+
+// Pick a layout density tier from the number of names so a large wall still
+// fits one screen (it's projected — no scrolling). Cards shrink as count grows.
+function densityFor(n) {
+  if (n <= 12) return "cozy";
+  if (n <= 30) return "medium";
+  if (n <= 60) return "dense";
+  if (n <= 120) return "packed";
+  return "huge";
+}
+
 async function tick() {
   let names;
   try {
@@ -69,6 +80,17 @@ async function tick() {
       frame.srcdoc = docFor(n);
       card.appendChild(frame);
       wall.appendChild(card);
+      // Scale the fixed 320x200 canvas to fill whatever size the card became
+      // (density/viewport driven), so big fonts and absolute layouts shrink to fit.
+      const fit = () => {
+        const r = card.getBoundingClientRect();
+        if (r.width) frame.style.setProperty("--scale", String(r.width / 320));
+      };
+      fit();
+      if (window.ResizeObserver) {
+        const ro = new ResizeObserver(fit);
+        ro.observe(card);
+      }
       card.addEventListener("animationend", () => card.classList.remove("name--enter"), { once: true });
       seen.set(k, { card, frame, sig });
     } else if (entry.sig !== sig) {
@@ -86,6 +108,7 @@ async function tick() {
   }
 
   countEl.textContent = String(names.length);
+  document.body.dataset.density = densityFor(names.length);
 
   // Empty state (only when there are genuinely zero names)
   let empty = wall.querySelector(".wall-empty");
