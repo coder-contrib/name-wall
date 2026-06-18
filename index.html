@@ -12,11 +12,14 @@
     <img class="logo" src="assets/Logo-white.svg" alt="Coder" />
     <h1>Wall of Names</h1>
     <p>Tell the agent <code>"make my name blue"</code> — then open a PR.</p>
+    <div id="activity" class="activity" hidden>
+      <span class="dot"></span><span id="active-count">0</span> active now
+    </div>
   </header>
   <main id="wall" aria-live="polite">Loading…</main>
   <footer>
     <span id="count">0</span> contributors · live from
-    <code>coder-contrib/name-wall</code>
+    <a href="https://github.com/coder-contrib/name-wall" target="_blank" rel="noopener"><code>coder-contrib/name-wall</code></a>
   </footer>
   <script src="wall.js"></script>
 </body>

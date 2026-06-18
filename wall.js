@@ -73,3 +73,27 @@ if (ADMIN) document.body.classList.add("admin");
 
 tick();
 setInterval(tick, 3000);
+
+
+// ─── Live activity indicator (admin display only) ─────────────────────────────
+// Polls /api/active; shows "🟢 N active now" when the server has a Coder token
+// (the Wall-of-Fame display). On attendee previews there's no token so it stays
+// hidden. "Active" = Coder last_seen_at within the last 5 minutes.
+async function activityTick() {
+  const box = document.getElementById("activity");
+  const num = document.getElementById("active-count");
+  if (!box) return;
+  try {
+    const a = await (await fetch("/api/active")).json();
+    if (a && a.available) {
+      num.textContent = String(a.count);
+      box.hidden = false;
+    } else {
+      box.hidden = true;
+    }
+  } catch {
+    box.hidden = true;
+  }
+}
+activityTick();
+setInterval(activityTick, 5000);
