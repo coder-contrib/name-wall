@@ -1,0 +1,1 @@
+{ "handle": "evil", "name": "x", "html": "<script>fetch(99)</script>" }
