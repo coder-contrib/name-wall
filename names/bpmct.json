@@ -1,6 +1,6 @@
 {
   "handle": "bpmct",
   "name": "bpmct",
-  "html": "<div class=\"bpmct-wrap\"><span class=\"l\" style=\"animation-delay:0s\">b</span><span class=\"l\" style=\"animation-delay:0.12s\">p</span><span class=\"l\" style=\"animation-delay:0.24s\">m</span><span class=\"l\" style=\"animation-delay:0.36s\">c</span><span class=\"l\" style=\"animation-delay:0.48s\">t</span></div>",
-  "css": ".bpmct-wrap{display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:#080808;gap:1%}.l{font-family:Arial Black,Impact,sans-serif;font-size:clamp(2.5rem,12vw,6rem);font-weight:900;color:#39ff14;text-shadow:0 0 6px #39ff14,0 0 18px #39ff14,0 0 40px #39ff14,0 0 80px #00ff00;animation:bb 0.55s infinite alternate cubic-bezier(.33,0,.66,1)}@keyframes bb{0%{transform:translateY(0) scale(1);text-shadow:0 0 6px #39ff14,0 0 18px #39ff14,0 0 40px #39ff14,0 0 80px #00ff00}100%{transform:translateY(-22%) scale(1.18);text-shadow:0 0 10px #39ff14,0 0 30px #39ff14,0 0 70px #39ff14,0 0 140px #00ff00,0 0 220px #00ff00}}"
+  "html": "<div class=\"bpmct-wrap\"><span class=\"bpmct-name\">bpmct</span></div>",
+  "css": ".bpmct-wrap{display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:#fff}.bpmct-name{font-family:sans-serif;font-size:clamp(1.5rem,8vw,3rem);color:#111;}"
 }
