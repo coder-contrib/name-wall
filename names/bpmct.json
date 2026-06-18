@@ -1,6 +1,6 @@
 {
   "handle": "bpmct",
-  "name": "bpmct",
-  "html": "<div class=\"bpmct-wrap\"><span class=\"bpmct-name\">bpmct</span></div>",
-  "css": ".bpmct-wrap{display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:#fff}.bpmct-name{font-family:sans-serif;font-size:clamp(1.5rem,8vw,3rem);color:#111;}"
+  "name": "Kevin",
+  "html": "<div class=\"kevin-wrap\"><div class=\"kevin-bg\"></div><div class=\"kevin-text\">Kevin</div></div>",
+  "css": ".kevin-wrap { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #0d0d1a; } .kevin-bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, #1a0a4a 0%, #0d0d1a 70%); animation: kevin-pulse 3s ease-in-out infinite; } @keyframes kevin-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } } .kevin-text { position: relative; font-family: 'Arial Black', sans-serif; font-size: clamp(2rem, 8vw, 4rem); font-weight: 900; letter-spacing: 0.05em; color: #fff; text-shadow: 0 0 10px #7b2fff, 0 0 30px #7b2fff, 0 0 60px #4a00e0, 0 0 100px #4a00e0; animation: kevin-glow 2s ease-in-out infinite alternate; } @keyframes kevin-glow { from { text-shadow: 0 0 10px #7b2fff, 0 0 30px #7b2fff, 0 0 60px #4a00e0; } to { text-shadow: 0 0 20px #bf80ff, 0 0 50px #bf80ff, 0 0 90px #7b2fff, 0 0 140px #4a00e0; } }"
 }
