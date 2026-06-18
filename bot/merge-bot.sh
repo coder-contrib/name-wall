@@ -62,15 +62,28 @@ echo "[merge-bot] watching $REPO (interval=${INTERVAL}s dry_run=$DRY_RUN review=
 
 # Mechanical gate: only names/*.json changed. Returns the single path on stdout.
 pr_changed_only_names() {
-  local num="$1" files
+  local num="$1" files author count f
   files=$(gh pr view "$num" --repo "$REPO" --json files --jq '.files[].path' 2>/dev/null)
   [ -z "$files" ] && return 1
+  # Every changed path must live under names/ and be JSON.
   while IFS= read -r f; do
     case "$f" in
       names/*.json) ;;
       *) return 1 ;;
     esac
   done <<< "$files"
+  # Exactly one file: a PR must not bundle several entries, and (below) must not
+  # clobber someone else's file.
+  count=$(printf '%s\n' "$files" | grep -c .)
+  [ "$count" = "1" ] || return 1
+  # The one file must be the author's OWN names/<handle>.json. This hard-blocks
+  # overwriting another person's entry, before the LLM review.
+  author=$(gh pr view "$num" --repo "$REPO" --json author --jq '.author.login' 2>/dev/null | tr 'A-Z' 'a-z')
+  f=$(printf '%s' "$files" | head -1)
+  case "$(printf '%s' "$f" | tr 'A-Z' 'a-z')" in
+    "names/${author}.json") ;;
+    *) return 1 ;;
+  esac
   return 0
 }
 
@@ -128,13 +141,22 @@ request_changes() {
   if [ "$DRY_RUN" = "1" ]; then
     echo "[merge-bot] DRY_RUN would request changes on #$num — $reason"
   else
-    gh pr review "$num" --repo "$REPO" --request-changes --body \
-"This entry can't merge yet:
+    local body
+    body="This entry can't merge yet:
 
 > ${reason}
 
-Edit your \`names/<handle>.json\` and push again — CSS animations and colors are welcome; no \`<script>\`, event handlers, or external URLs. It will re-review automatically." 2>/dev/null \
-      && echo "[merge-bot] requested changes on #$num — $reason"
+Edit your \`names/<handle>.json\` and push again — CSS animations and colors are welcome; no \`<script>\`, event handlers, or external URLs, and only add or edit your own file. It will re-review automatically."
+    # Prefer a formal request-changes review. GitHub forbids reviewing your own
+    # PR, so if that fails (e.g. a self-authored test PR) fall back to a plain
+    # issue comment so the reason is always visible instead of silent.
+    if gh pr review "$num" --repo "$REPO" --request-changes --body "$body" 2>/dev/null; then
+      echo "[merge-bot] requested changes on #$num — $reason"
+    elif gh pr comment "$num" --repo "$REPO" --body "$body" 2>/dev/null; then
+      echo "[merge-bot] commented (cannot self-review) on #$num — $reason"
+    else
+      echo "[merge-bot] could not post review/comment on #$num — $reason"
+    fi
   fi
   echo "$key" >> "$REVIEWED_FILE"
 }
@@ -156,7 +178,9 @@ while true; do
   prs=$(gh pr list --repo "$REPO" --state open --json number --jq 'sort_by(.number) | .[].number' 2>/dev/null)
   for num in $prs; do
     if ! pr_changed_only_names "$num"; then
-      echo "[merge-bot] skip #$num — touches files outside names/"
+      # Mechanically blocked (multiple files, a non-names file, or editing
+      # someone else's entry). Tell the author once instead of skipping silently.
+      request_changes "$num" "This PR must add or edit only your own names/<your-handle>.json (one file). It currently touches other files or another person's entry."
       continue
     fi
     verdict=$(agent_review "$num")
