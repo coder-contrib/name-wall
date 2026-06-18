@@ -223,3 +223,23 @@ header .sub { color: var(--muted); margin: 0; }
 .queue .pr-title { flex: 1; color: var(--coder-white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .queue .pr-num { color: var(--muted); font-family: "FT System Mono", monospace; }
 .queue .queue-empty { color: var(--muted); border: none; }
+
+
+/* ─── Name cards (full HTML/CSS canvas per entry, sandboxed iframe) ─────────── */
+#wall .name {
+  width: clamp(220px, 22vw, 320px);
+  height: clamp(140px, 18vw, 200px);
+  border-radius: 16px;
+  overflow: hidden;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  box-shadow: 0 6px 30px rgba(0,0,0,0.35);
+  /* keep the enter pop animation */
+}
+#wall .name-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: transparent;
+}

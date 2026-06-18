@@ -1,1 +1,6 @@
-{ "name": "Ben 🍪", "handle": "bpmct", "color": "#d2691e" }
+{
+  "handle": "bpmct",
+  "name": "Ben",
+  "html": "<div class='wrap'><span class='glow'>Ben</span></div>",
+  "css": ".wrap{display:flex;align-items:center;justify-content:center;height:100%}.glow{font-size:3rem;font-weight:800;background:linear-gradient(90deg,#7511e2,#01f2ff,#66ffab,#7511e2);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:slide 4s linear infinite}@keyframes slide{to{background-position:300% 0}}"
+}

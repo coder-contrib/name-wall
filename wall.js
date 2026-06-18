@@ -4,10 +4,38 @@
 
 const wall = document.getElementById("wall");
 const countEl = document.getElementById("count");
-const seen = new Map(); // handle -> { el, color, name }
+const seen = new Map(); // handle -> { card, frame, sig }
 
 function keyOf(n) {
   return n.handle || n.name || JSON.stringify(n);
+}
+
+// A signature of the entry's visual content, so we only re-render a card when
+// its content actually changes (no flicker on unrelated polls).
+function sigOf(n) {
+  return JSON.stringify([n.name, n.handle, n.color, n.html, n.css]);
+}
+
+// Build the sandboxed HTML document for one name. Each entry gets a full
+// HTML/CSS canvas (animations, movement, components) rendered inside an
+// <iframe sandbox> with NO scripts allowed — so creative CSS is fully
+// supported while arbitrary JS / XSS can't run on the shared wall, and one
+// entry's styles can't leak out and break the layout or other names.
+function docFor(n) {
+  const handle = esc(n.handle || "");
+  const body = n.html
+    ? n.html
+    : `<div class="fallback" style="color:${esc(n.color || "#fff")}">${esc(n.name || handle)}</div>`;
+  const css = n.css || "";
+  return `<!doctype html><html><head><meta charset="utf-8"><style>
+    html,body{margin:0;height:100%;overflow:hidden;background:transparent;
+      display:flex;align-items:center;justify-content:center;
+      font-family:'Lay Grotesk',system-ui,sans-serif;color:#e6e8ee;}
+    .fallback{font-size:2.4rem;font-weight:800;text-shadow:0 0 24px currentColor;}
+    .handle{position:absolute;bottom:6px;left:0;right:0;text-align:center;
+      font-family:'FT System Mono',monospace;font-size:.7rem;color:#8b93a7;}
+    ${css}
+  </style></head><body>${body}<div class="handle">@${handle}</div></body></html>`;
 }
 
 async function tick() {
@@ -18,8 +46,8 @@ async function tick() {
     return; // transient; keep what's on screen
   }
 
-  // Clear any non-.name content (e.g. the initial "Loading…"/empty-state node)
-  // so the placeholder never lingers next to real names.
+  // Clear any non-card content (e.g. the initial empty-state node) so the
+  // placeholder never lingers next to real names.
   for (const child of Array.from(wall.childNodes)) {
     if (child.nodeType !== 1 || !child.classList.contains("name")) child.remove();
   }
@@ -28,31 +56,31 @@ async function tick() {
   for (const n of names) {
     const k = keyOf(n);
     present.add(k);
-    const color = n.color || "#ffffff";
-    const label = n.name || n.handle || "";
+    const sig = sigOf(n);
     let entry = seen.get(k);
     if (!entry) {
-      // new name → create + animate in once
-      const el = document.createElement("div");
-      el.className = "name name--enter";
-      el.style.color = color;
-      el.innerHTML = `${esc(label)}<small>@${esc(n.handle || "")}</small>`;
-      wall.appendChild(el);
-      // remove the enter class after the animation so it never replays
-      el.addEventListener("animationend", () => el.classList.remove("name--enter"), { once: true });
-      seen.set(k, { el, color, name: label });
-    } else if (entry.color !== color || entry.name !== label) {
-      // changed → update in place, no re-animate
-      entry.el.style.color = color;
-      entry.el.innerHTML = `${esc(label)}<small>@${esc(n.handle || "")}</small>`;
-      entry.color = color;
-      entry.name = label;
+      // new entry → create a sandboxed iframe card, animate it in once
+      const card = document.createElement("div");
+      card.className = "name name--enter";
+      const frame = document.createElement("iframe");
+      frame.className = "name-frame";
+      frame.setAttribute("sandbox", ""); // no scripts, no same-origin → CSS only
+      frame.setAttribute("scrolling", "no");
+      frame.srcdoc = docFor(n);
+      card.appendChild(frame);
+      wall.appendChild(card);
+      card.addEventListener("animationend", () => card.classList.remove("name--enter"), { once: true });
+      seen.set(k, { card, frame, sig });
+    } else if (entry.sig !== sig) {
+      // content changed → refresh the iframe in place (no re-animate)
+      entry.frame.srcdoc = docFor(n);
+      entry.sig = sig;
     }
   }
-  // remove names that disappeared
+  // remove entries that disappeared
   for (const [k, entry] of seen) {
     if (!present.has(k)) {
-      entry.el.remove();
+      entry.card.remove();
       seen.delete(k);
     }
   }
@@ -65,7 +93,7 @@ async function tick() {
     if (!empty) {
       empty = document.createElement("div");
       empty.className = "wall-empty";
-      empty.textContent = "No names yet — be the first! Tell the agent your name and color.";
+      empty.textContent = "No names yet — be the first! Ask the agent to make your name come alive.";
       wall.appendChild(empty);
     }
   } else if (empty) {

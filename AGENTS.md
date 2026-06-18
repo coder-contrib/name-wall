@@ -6,73 +6,77 @@ steps for them and explain what's happening in friendly, plain language.
 
 ## Important: paths
 
-The repo is at the **absolute path `~/name-wall`** (which is
-`/home/node/name-wall`). Your tool working directory may be different (e.g.
-`/root`), so **always use the absolute path `/home/node/name-wall/...`** for
-file reads/writes and `cd /home/node/name-wall` before git/gh commands. Do not
-use relative paths.
+The repo is at the **absolute path `/home/node/name-wall`**. Your tool working
+directory may be different (e.g. `/root`), so **always use the absolute path
+`/home/node/name-wall/...`** for file reads/writes and run
+`cd /home/node/name-wall` before any git/gh command. Do not use relative paths.
 
 ## The goal
 
-Each contributor has **one file**: `names/<github-handle>.json`. The wall renders
-every name in the color they choose. The attendee's PR is auto-approved and
-merged within about a minute, after which their name appears on the big screen.
+Each contributor has **one file**: `names/<github-handle>.json`. Each name is
+rendered as its **own mini web page** on the wall — a full HTML + CSS canvas, so
+people can make animated, moving, gradient, component-style names, not just a
+color. The attendee's PR is auto-approved and merged within about a minute,
+after which their name appears on the big screen.
 
 ## The artifact
 
-Create (or edit) exactly **one** file: `names/<their-github-handle>.json`
+Create (or edit) exactly **one** file:
+`/home/node/name-wall/names/<their-github-handle>.json`
 
 ```json
 {
-  "name": "Ben",
   "handle": "bpmct",
-  "color": "#3b82f6"
+  "name": "Ben",
+  "html": "<div class='wrap'><span class='glow'>Ben</span></div>",
+  "css": ".wrap{display:flex;align-items:center;justify-content:center;height:100%}.glow{font-size:3rem;font-weight:800;background:linear-gradient(90deg,#7511e2,#01f2ff,#66ffab,#7511e2);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:slide 4s linear infinite}@keyframes slide{to{background-position:300% 0}}"
 }
 ```
 
-- `name` — what to display (their first name or whatever they want shown).
-- `handle` — their GitHub username. Use it for the filename too:
-  `names/<handle>.json`.
-- `color` — a CSS hex color like `#3b82f6`. Map plain requests to hex:
+- `handle` — their GitHub username. Use it for the filename too.
+- `name` — plain-text fallback label (used if you omit `html`).
+- `html` — **the creative part**: any HTML for their name card. Build whatever
+  they ask for — animated text, moving elements, gradients, glows, emoji,
+  layered components, CSS art, bouncing letters, etc.
+- `css` — styles for the html, including `@keyframes` animations. Scope your
+  selectors (e.g. a wrapper class) so they're self-contained.
 
-  | They say | Use (Coder brand) |
-  |----------|-------------------|
-  | blue | `#4893fc` |
-  | purple | `#7511e2` |
-  | light purple / lavender | `#bc7cff` |
-  | magenta / pink | `#f08dff` |
-  | cyan | `#01f2ff` |
-  | green | `#66ffab` |
-  | coral / orange | `#ff8067` |
-  | rust | `#a13000` |
-  | white / default | `#ffffff` |
+Each card renders inside a **sandboxed iframe** (~300×200), so:
+- You have a full HTML/CSS canvas and can animate/move freely.
+- **CSS only — no `<script>`, no JS, no external network/resource loads.**
+  Inline everything; do not reference external URLs, fonts, or images.
+- Keep it self-contained; the card is a fixed size, so design within it.
 
-  If they ask for "rainbow", a gradient, or anything fancy, just pick the
-  closest single hex — the wall renders one color per name. Prefer the Coder brand colors above.
+### Simple fallback
+
+For "just make my name blue", you can skip `html`/`css` and use:
+```json
+{ "handle": "bpmct", "name": "Ben", "color": "#4893fc" }
+```
 
 ## Rules
 
-- **Only ever create or edit the attendee's own `names/<handle>.json`.** Never
-  touch anyone else's file, and never edit `index.html`, `wall.js`, `style.css`,
-  `serve.js`, or any shared file. One file per person keeps merges clean.
-- If `names/<handle>.json` already exists, edit it in place (e.g. change color).
-- Determine the handle from the workspace owner / their GitHub login. If unsure,
-  ask them once: "What's your GitHub username?"
+- **Only ever create/edit the attendee's own `names/<handle>.json`.** Never
+  touch anyone else's file or any shared file (index.html, wall.js, etc.).
+- No scripts / no external loads — CSS animations only.
+- If their file already exists, edit it in place.
 
 ## Steps
 
-1. Create/edit `names/<handle>.json` with their name + chosen color.
-2. **Preview:** make sure the preview server is running, then point them at the
-   "Name Wall" app button (or http://localhost:8080). Their name should appear
-   in their color within a few seconds (the wall auto-refreshes).
-   - Start it if needed: `node serve.js &` (from the repo root).
-3. **Open a pull request** with their change. The title/branch can be anything —
-   e.g. `git checkout -b add-<handle>`, commit, push, then
-   `gh pr create --fill` (or open it however is easiest).
-4. Tell them: "Your PR is in — it'll be auto-approved and merged in about a
-   minute, and your name will light up on the wall on screen." 🎉
+1. Get their handle: `gh api user --jq .login`.
+2. **Fork first** (they have no write access to upstream):
+   `cd /home/node/name-wall && gh repo fork coder-contrib/name-wall --clone=false --remote=true`
+3. Create a branch and write `/home/node/name-wall/names/<handle>.json` with
+   their creative `html` + `css` (or the simple `color` fallback).
+4. **Preview:** make sure the wall preview is running and point them at the
+   "Name Wall" app button (port 8080) so they SEE their animated name before
+   the PR. Start it if needed: `cd /home/node/name-wall && node serve.js &`.
+5. Commit, push to their fork, open a PR:
+   `gh pr create --repo coder-contrib/name-wall --fill` (any title is fine).
+6. Tell them: "Your PR is in — it'll be auto-approved and merged in about a
+   minute, and your name will light up on the wall." 🎉
 
 ## Preview server
 
 `node serve.js` serves the wall on port 8080 and reads `names/*.json` live, so
-there is no manifest to regenerate or shared file to edit.
+there's no manifest to regenerate or shared file to edit.
