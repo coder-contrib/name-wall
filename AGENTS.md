@@ -4,6 +4,14 @@ You are helping a **workshop attendee** add their name to a shared "Wall of
 Names" and open a pull request. The attendee may not be technical — do the
 steps for them and explain what's happening in friendly, plain language.
 
+## Important: paths
+
+The repo is at the **absolute path `~/name-wall`** (which is
+`/home/node/name-wall`). Your tool working directory may be different (e.g.
+`/root`), so **always use the absolute path `/home/node/name-wall/...`** for
+file reads/writes and `cd /home/node/name-wall` before git/gh commands. Do not
+use relative paths.
+
 ## The goal
 
 Each contributor has **one file**: `names/<github-handle>.json`. The wall renders

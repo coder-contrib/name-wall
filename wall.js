@@ -105,3 +105,38 @@ async function activityTick() {
 }
 activityTick();
 setInterval(activityTick, 5000);
+
+
+// ─── PR queue panel (admin display only) ──────────────────────────────────────
+// Polls /api/pending; shows open PRs to the wall repo as a live queue so the
+// room can watch changes line up before they auto-merge. Auto-refreshes.
+async function queueTick() {
+  const box = document.getElementById("queue");
+  const list = document.getElementById("queue-list");
+  const count = document.getElementById("queue-count");
+  if (!box) return;
+  try {
+    const q = await (await fetch("/api/pending")).json();
+    if (!q || !q.available) { box.hidden = true; return; }
+    box.hidden = false;
+    count.textContent = String(q.count);
+    // diff: keep it simple — rebuild the small list each poll
+    list.innerHTML = "";
+    if (!q.count) {
+      const li = document.createElement("li");
+      li.className = "queue-empty";
+      li.textContent = "All caught up";
+      list.appendChild(li);
+    } else {
+      for (const pr of q.prs) {
+        const li = document.createElement("li");
+        li.innerHTML = `<span class="pr-user">@${esc(pr.user || "")}</span> <span class="pr-title">${esc(pr.title || "")}</span> <span class="pr-num">#${pr.number}</span>`;
+        list.appendChild(li);
+      }
+    }
+  } catch {
+    box.hidden = true;
+  }
+}
+queueTick();
+setInterval(queueTick, 3000);

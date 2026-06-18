@@ -78,6 +78,47 @@ function readActive(cb) {
   req.end();
 }
 
+// Query GitHub for open PRs to the wall repo (the live "PR queue"). Needs a
+// GitHub token in the env (GITHUB_TOKEN), present on the admin display.
+const GH_TOKEN = process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "";
+const WALL_REPO = process.env.WALL_REPO || "coder-contrib/name-wall";
+function readPending(cb) {
+  if (!GH_TOKEN) return cb({ available: false });
+  const u = new URL(`https://api.github.com/repos/${WALL_REPO}/pulls?state=open&sort=created&direction=asc&per_page=50`);
+  const req = https.request(u, {
+    headers: {
+      "Authorization": `Bearer ${GH_TOKEN}`,
+      "User-Agent": "name-wall",
+      "Accept": "application/vnd.github+json",
+    },
+    timeout: 4000,
+  }, (r) => {
+    let body = "";
+    r.on("data", (c) => (body += c));
+    r.on("end", () => {
+      try {
+        const prs = JSON.parse(body);
+        if (!Array.isArray(prs)) return cb({ available: false });
+        cb({
+          available: true,
+          count: prs.length,
+          prs: prs.map((p) => ({
+            number: p.number,
+            title: p.title,
+            user: p.user && p.user.login,
+            url: p.html_url,
+          })),
+        });
+      } catch {
+        cb({ available: false });
+      }
+    });
+  });
+  req.on("error", () => cb({ available: false }));
+  req.on("timeout", () => { req.destroy(); cb({ available: false }); });
+  req.end();
+}
+
 http
   .createServer((req, res) => {
     if (req.url === "/api/names") {
@@ -87,6 +128,13 @@ http
     }
     if (req.url === "/api/active") {
       readActive((data) => {
+        res.writeHead(200, { "Content-Type": TYPES[".json"] });
+        res.end(JSON.stringify(data));
+      });
+      return;
+    }
+    if (req.url === "/api/pending") {
+      readPending((data) => {
         res.writeHead(200, { "Content-Type": TYPES[".json"] });
         res.end(JSON.stringify(data));
       });

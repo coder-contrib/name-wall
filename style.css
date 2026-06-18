@@ -182,3 +182,44 @@ header .join a {
   text-shadow: 0 0 20px rgba(1, 242, 255, 0.5);
 }
 header .sub { color: var(--muted); margin: 0; }
+
+/* ─── PR queue panel (admin) ──────────────────────────────────── */
+.queue {
+  position: fixed;
+  top: 1.2rem;
+  right: 1.2rem;
+  width: min(320px, 30vw);
+  background: rgba(21, 24, 33, 0.92);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+}
+.queue-title {
+  font-family: "FT System Mono", monospace;
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.6rem;
+  color: var(--coder-cyan);
+}
+.queue-title #queue-count {
+  background: var(--coder-purple-600);
+  color: #fff;
+  border-radius: 999px;
+  padding: 0 0.5em;
+  margin-left: 0.3em;
+}
+.queue ul { list-style: none; margin: 0; padding: 0; }
+.queue li {
+  font-size: 0.85rem;
+  padding: 0.35em 0;
+  border-bottom: 1px solid var(--border);
+  display: flex; gap: 0.4em; align-items: baseline;
+  animation: pop 0.35s ease;
+}
+.queue li:last-child { border-bottom: none; }
+.queue .pr-user { color: var(--coder-purple-400); font-weight: 600; }
+.queue .pr-title { flex: 1; color: var(--coder-white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.queue .pr-num { color: var(--muted); font-family: "FT System Mono", monospace; }
+.queue .queue-empty { color: var(--muted); border: none; }
