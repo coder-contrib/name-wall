@@ -41,7 +41,17 @@ NO_REVIEW="${NO_REVIEW:-0}"
 
 command -v gh >/dev/null || { echo "gh CLI required"; exit 1; }
 command -v jq >/dev/null || { echo "jq required"; exit 1; }
-gh auth status >/dev/null 2>&1 || { echo "gh not authenticated"; exit 1; }
+# Auth: prefer an existing gh login (Coder GitHub external-auth). If gh isn't
+# logged in but a GITHUB_TOKEN is in the env (baked into the admin display),
+# log in with it — so the bot works without the host doing the interactive
+# external-auth device flow.
+if ! gh auth status >/dev/null 2>&1; then
+  if [ -n "${GITHUB_TOKEN:-}" ]; then
+    echo "$GITHUB_TOKEN" | gh auth login --with-token >/dev/null 2>&1 || true
+    gh auth setup-git >/dev/null 2>&1 || true
+  fi
+  gh auth status >/dev/null 2>&1 || { echo "gh not authenticated (no login and no GITHUB_TOKEN)"; exit 1; }
+fi
 if [ -z "$ANTHROPIC_API_KEY" ] && [ "$NO_REVIEW" != "1" ]; then
   echo "[merge-bot] WARNING: no ANTHROPIC_API_KEY — set NO_REVIEW=1 for mechanical-only, or provide a key. Refusing blanket approve."
   exit 1
