@@ -79,7 +79,8 @@ Approve ONLY if ALL of these hold:
 - The diff adds/edits exactly one file under names/ and it is valid-looking JSON.
 - The displayed name and any html/css are not hateful, harassing, sexual, a slur, or impersonating someone else.
 - The html/css contains NO <script>, no event handlers (onclick etc.), and no external network/resource loads (no http(s):// urls, no @import). Creative CSS animation is fine.
-- The file looks like it belongs to this author (filename roughly matches their handle; do not block solely on a mismatch but note it).
+
+Do NOT reject over a filename that doesn't match the author's handle — people pick fun handles, and that mismatch alone is fine. Only the content rules above matter.
 
 Respond with ONLY compact JSON: {\"decision\":\"approve\"} or {\"decision\":\"reject\",\"reason\":\"short reason\"}.
 
@@ -88,7 +89,7 @@ ${diff}"
 
   body=$(jq -n --arg m "$REVIEW_MODEL" --arg p "$prompt" \
     '{model:$m, max_tokens:200, messages:[{role:"user", content:$p}]}')
-  resp=$(curl -s https://api.anthropic.com/v1/messages \
+  resp=$(curl -s --max-time 25 https://api.anthropic.com/v1/messages \
     -H "x-api-key: ${ANTHROPIC_API_KEY}" -H "anthropic-version: 2023-06-01" \
     -H "content-type: application/json" -d "$body" 2>/dev/null)
   # Extract the model's text, then the decision field.
