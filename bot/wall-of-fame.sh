@@ -25,6 +25,16 @@ if [ -z "${CODER_SESSION_TOKEN:-}" ]; then
 fi
 export CODER_URL="${CODER_URL:-http://10.42.0.1:3000}"  # in-pod Coder address
 
+# Shared file so serve.js drops merged PRs from the queue instantly.
+export MERGED_FILE="${MERGED_FILE:-/tmp/name-wall-merged}"
+: > "$MERGED_FILE"
+
+# Anthropic key for the review agent (the merge bot reviews each PR, not blanket
+# approve). Read from env, or from the box's local.nix if present.
+if [ -z "${ANTHROPIC_API_KEY:-}" ] && [ -r /etc/nixos-repo/hosts/coderbox/local.nix ]; then
+  export ANTHROPIC_API_KEY=$(grep -o "CODER_AIBRIDGE_ANTHROPIC_KEY *= *\"[^\"]*\"" /etc/nixos-repo/hosts/coderbox/local.nix 2>/dev/null | sed "s/.*\"\([^\"]*\)\"/\1/")
+fi
+
 # GitHub token → live PR queue (/api/pending) and the merge bot.
 if [ -z "${GITHUB_TOKEN:-}" ]; then
   export GITHUB_TOKEN=$(gh auth token 2>/dev/null || true)

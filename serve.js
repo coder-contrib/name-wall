@@ -99,10 +99,18 @@ function readPending(cb) {
       try {
         const prs = JSON.parse(body);
         if (!Array.isArray(prs)) return cb({ available: false });
+        // Drop PRs the merge bot just merged so the queue updates instantly
+        // (GitHub's open-PR list can lag a few seconds behind a merge).
+        let merged = new Set();
+        try {
+          const mf = process.env.MERGED_FILE || "/tmp/name-wall-merged";
+          merged = new Set(fs.readFileSync(mf, "utf8").split(/\s+/).filter(Boolean).map(Number));
+        } catch { /* no merged file yet */ }
+        const open = prs.filter((p) => !merged.has(p.number));
         cb({
           available: true,
-          count: prs.length,
-          prs: prs.map((p) => ({
+          count: open.length,
+          prs: open.map((p) => ({
             number: p.number,
             title: p.title,
             user: p.user && p.user.login,
