@@ -21,6 +21,12 @@ async function tick() {
     return; // transient; keep what's on screen
   }
 
+  // Clear any non-.name content (e.g. the initial "Loading…"/empty-state node)
+  // so the placeholder never lingers next to real names.
+  for (const child of Array.from(wall.childNodes)) {
+    if (child.nodeType !== 1 || !child.classList.contains("name")) child.remove();
+  }
+
   const present = new Set();
   for (const n of names) {
     const k = keyOf(n);
@@ -55,11 +61,18 @@ async function tick() {
   }
 
   countEl.textContent = String(names.length);
-  if (wall.dataset.empty === "1" && names.length) {
-    wall.dataset.empty = "0";
-  }
-  if (!names.length && wall.childElementCount === 0) {
-    wall.dataset.empty = "1";
+
+  // Empty state (only when there are genuinely zero names)
+  let empty = wall.querySelector(".wall-empty");
+  if (!names.length && !wall.querySelector(".name")) {
+    if (!empty) {
+      empty = document.createElement("div");
+      empty.className = "wall-empty";
+      empty.textContent = "No names yet — be the first! Tell the agent your name and color.";
+      wall.appendChild(empty);
+    }
+  } else if (empty) {
+    empty.remove();
   }
 }
 
