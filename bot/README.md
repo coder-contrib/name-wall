@@ -41,8 +41,21 @@ DRY_RUN=1 ./bot/merge-bot.sh # log decisions only
 For each open PR it checks that **every changed file is `names/*.json`** (so a
 PR can't sneak in other changes), then approves and squash-merges oldest-first.
 
+## 3. Role bot (auto-grant Coder Agents User)
+
+When an attendee logs in with GitHub they start with no org role. The role bot
+polls members and grants the **`agents-access`** ("Coder Agents User") role to
+anyone missing it, so they can use the agent/CLI immediately.
+
+```sh
+export CODER_SESSION_TOKEN=$(coder tokens create --lifetime 24h)  # owner/org-admin
+./bot/role-bot.sh            # grant agents-access to new logins
+DRY_RUN=1 ./bot/role-bot.sh  # log only
+```
+
 ## Typical setup
 
-Two terminals in the admin workspace:
+Three terminals in the admin workspace:
+- Terminal C: `./bot/role-bot.sh`     → grants the agents role to new logins
 - Terminal A: `./bot/wall-of-fame.sh`  → project this
 - Terminal B: `./bot/merge-bot.sh`     → watch names roll in
