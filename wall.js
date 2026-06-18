@@ -82,6 +82,8 @@ function esc(s) {
   }[c]));
 }
 
+// ?admin is a manual override; admin mode also auto-enables when the server
+// has Coder API access (the token-bearing Wall-of-Fame display) — see activityTick.
 if (ADMIN) document.body.classList.add("admin");
 
 tick();
@@ -99,6 +101,8 @@ async function activityTick() {
   try {
     const a = await (await fetch("/api/active")).json();
     if (a && a.available) {
+      // This server has Coder API access → it's the admin display.
+      document.body.classList.add("admin");
       num.textContent = String(a.count);
       box.hidden = false;
     } else {
