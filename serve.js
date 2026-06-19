@@ -81,8 +81,11 @@ function readActive(cb) {
             const owner = w.owner_name;
             if (!owner || ACTIVE_EXCLUDE.has(owner)) continue;
             if ((w.latest_build && w.latest_build.status) !== "running") continue;
-            // Agent heartbeat (preferred) or recent interaction.
-            let live = recent(w.last_used_at);
+            // Only use agent heartbeat (last_connected_at) — it's a real
+            // every-few-seconds ping from the running agent. last_used_at
+            // reflects workspace/build activity and can stay stale for hours
+            // after an attendee has left, causing false "active" counts.
+            let live = false;
             const resources = (w.latest_build && w.latest_build.resources) || [];
             for (const res of resources) {
               for (const a of res.agents || []) {
