@@ -117,6 +117,7 @@ async function tick() {
       // new entry → create a sandboxed iframe card, animate it in once
       const card = document.createElement("div");
       card.className = "name name--enter";
+      card.dataset.handle = k;
       const frame = document.createElement("iframe");
       frame.className = "name-frame";
       frame.setAttribute("sandbox", ""); // no scripts, no same-origin → CSS only
@@ -328,6 +329,15 @@ async function rosterTick() {
       const li = document.createElement("li");
       li.className = "roster-row";
       li.innerHTML = html;
+      li.style.cursor = "pointer";
+      li.title = `Jump to ${u.username}'s card`;
+      li.addEventListener("click", () => {
+        const card = wall.querySelector(`.name[data-handle="${u.username}"]`);
+        if (!card) return;
+        card.scrollIntoView({ behavior: "smooth", block: "center", inline: "center" });
+        card.classList.add("name--highlight");
+        card.addEventListener("animationend", () => card.classList.remove("name--highlight"), { once: true });
+      });
       list.appendChild(li);
       rosterSeen.set(u.username, { li, sig });
     } else if (e.sig !== sig) {
