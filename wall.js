@@ -13,7 +13,8 @@ function keyOf(n) {
 // A signature of the entry's visual content, so we only re-render a card when
 // its content actually changes (no flicker on unrelated polls).
 function sigOf(n) {
-  return JSON.stringify([n.name, n.handle, n.color, n.html, n.css]);
+  return JSON.stringify([n.name, n.handle, n.color, n.html, n.css,
+    n.role, n.tagline, n.status]);
 }
 
 // Build the sandboxed HTML document for one name. Each entry gets a full
@@ -27,9 +28,31 @@ function docFor(n) {
     ? n.html
     : `<div class="fallback" style="color:${esc(n.color || "#fff")}">${esc(n.name || handle)}</div>`;
   const css = n.css || "";
+  // Optional showcase fields (plain text — escaped). role + tagline render as a
+  // small caption; status renders as a colored pill (hiring / seeking / open).
+  const role = esc(n.role || "");
+  const tagline = esc(n.tagline || "");
+  const statusKey = String(n.status || "").toLowerCase().replace(/[^a-z-]/g, "");
+  const statusLabel = {
+    hiring: "Hiring",
+    seeking: "Open to work",
+    open: "Open to work",
+    "open-to-work": "Open to work",
+    freelance: "Freelancing",
+    learning: "Learning",
+  }[statusKey] || "";
+  const pill = statusLabel
+    ? `<div class="status st-${esc(statusKey)}">${esc(statusLabel)}</div>` : "";
+  const hasShowcase = !!(role || tagline || statusLabel);
+  const caption = (role || tagline)
+    ? `<div class="showcase">${role ? `<span class="role">${role}</span>` : ""}` +
+      `${role && tagline ? `<span class="dot">·</span>` : ""}` +
+      `${tagline ? `<span class="tagline">${tagline}</span>` : ""}</div>`
+    : "";
   // The iframe fills its whole region; html/body are 100%/100% so the author's
   // art covers the box at any size. Authors design responsively (%, vw/vh, flex,
-  // clamp) against this box rather than a fixed pixel canvas.
+  // clamp) against this box rather than a fixed pixel canvas. The showcase strip
+  // is overlaid at the bottom (pointer-events:none) so it never blocks the art.
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;
       display:flex;align-items:center;justify-content:center;
@@ -37,8 +60,25 @@ function docFor(n) {
     .fallback{font-size:clamp(1.4rem,9vw,3rem);font-weight:800;text-shadow:0 0 24px currentColor;}
     .handle{position:absolute;bottom:5%;left:0;right:0;text-align:center;
       font-family:'FT System Mono',monospace;font-size:clamp(.5rem,3vw,.75rem);color:#8b93a7;}
+    .overlay{position:absolute;left:0;right:0;bottom:0;padding:5% 5% 3%;
+      display:flex;flex-direction:column;align-items:center;gap:.25em;
+      pointer-events:none;}
+    .overlay.has-showcase{background:linear-gradient(180deg,transparent,rgba(8,10,18,.72));}
+    .overlay .showcase{font-family:'Lay Grotesk',system-ui,sans-serif;
+      font-size:clamp(.5rem,3vw,.8rem);line-height:1.2;color:#cdd2de;text-align:center;
+      max-width:96%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .overlay .role{font-weight:700;color:#e6e8ee;}
+    .overlay .dot{margin:0 .4em;color:#6b7280;}
+    .overlay .tagline{color:#aab0c0;}
+    .overlay .status{font-family:'FT System Mono',monospace;
+      font-size:clamp(.45rem,2.6vw,.7rem);font-weight:600;letter-spacing:.02em;
+      padding:.12em .6em;border-radius:999px;border:1px solid transparent;}
+    .overlay .status.st-hiring{color:#01f2ff;border-color:rgba(1,242,255,.5);background:rgba(1,242,255,.08);}
+    .overlay .status.st-seeking,.overlay .status.st-open,.overlay .status.st-open-to-work{color:#66ffab;border-color:rgba(102,255,171,.5);background:rgba(102,255,171,.08);}
+    .overlay .status.st-freelance{color:#ffd166;border-color:rgba(255,209,102,.5);background:rgba(255,209,102,.08);}
+    .overlay .status.st-learning{color:#c9a7ff;border-color:rgba(201,167,255,.5);background:rgba(201,167,255,.08);}
     ${css}
-  </style></head><body>${body}<div class="handle">@${handle}</div></body></html>`;
+  </style></head><body>${body}<div class="overlay${hasShowcase ? " has-showcase" : ""}">${caption}${pill}<div class="handle" style="position:static">@${handle}</div></div></body></html>`;
 }
 
 

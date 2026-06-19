@@ -28,6 +28,9 @@ Create (or edit) exactly **one** file:
 {
   "handle": "bpmct",
   "name": "Ben",
+  "role": "Platform Engineer",
+  "tagline": "I make developer environments fast",
+  "status": "hiring",
   "html": "<div class='wrap'><span class='glow'>Ben</span></div>",
   "css": ".wrap{display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:#0b0a1f}.glow{font-size:clamp(1.4rem,9vw,3rem);font-weight:800;background:linear-gradient(90deg,#7511e2,#01f2ff,#66ffab,#7511e2);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:slide 4s linear infinite}@keyframes slide{to{background-position:300% 0}}"
 }
@@ -40,6 +43,16 @@ Create (or edit) exactly **one** file:
   layered components, CSS art, bouncing letters, etc.
 - `css` — styles for the html, including `@keyframes` animations. Scope your
   selectors (e.g. a wrapper class) so they're self-contained.
+
+**Optional showcase fields** (plain text — the wall renders them as a caption +
+status pill under the art; leave them out if the person doesn't want them):
+- `role` — what they do, e.g. `"Platform Engineer"`, `"CS Student"`, `"Founder"`.
+- `tagline` — a short one-liner about them or what they're looking for. Keep it
+  brief (it renders on a single line and ellipsizes if long).
+- `status` — one of `hiring`, `seeking` (a.k.a. `open` — open to work),
+  `freelance`, or `learning`. Only set it if they tell you their situation.
+  Ask the attendee if they'd like to add any of these (e.g. "are you hiring, job
+  hunting, or just here to play?") — but it's totally optional.
 
 Each card renders inside a **sandboxed iframe** that is your name's own region
 on the wall. Design for it as a **responsive box**, not a fixed canvas:

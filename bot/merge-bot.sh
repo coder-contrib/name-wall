@@ -96,11 +96,11 @@ agent_review() {
   author=$(gh pr view "$num" --repo "$REPO" --json author --jq '.author.login' 2>/dev/null)
   diff=$(gh pr diff "$num" --repo "$REPO" 2>/dev/null | head -c 6000)
 
-  prompt="You are reviewing a pull request to a friendly public \"Wall of Names\" at a Coder workshop. The PR author's GitHub login is \"${author}\". Each contributor adds ONE file names/<their-handle>.json with their name and creative HTML/CSS for how it renders. Each entry renders in its own responsive box (~4:3, width varies ~100–340px) and should fill that box and look good at any size in that range.
+  prompt="You are reviewing a pull request to a friendly public \"Wall of Names\" at a Coder workshop. The PR author's GitHub login is \"${author}\". Each contributor adds ONE file names/<their-handle>.json with their name and creative HTML/CSS for how it renders. Each entry renders in its own responsive box (~4:3, width varies ~100–340px) and should fill that box and look good at any size in that range. The JSON MAY also include optional showcase fields rendered as plain text under the art: \"role\" (e.g. job title), \"tagline\" (a short blurb), and \"status\" (one of hiring, seeking, open, freelance, learning). These are people optionally sharing that they are hiring, job-seeking, etc.
 
 Approve ONLY if ALL of these hold:
 - The diff adds/edits exactly one file under names/ and it is valid-looking JSON.
-- The displayed name and any html/css are not hateful, harassing, sexual, a slur, or impersonating someone else.
+- The displayed name, any html/css, AND the optional role/tagline/status text are not hateful, harassing, sexual, a slur, spammy, or impersonating someone else. role/tagline are short plain text (no markup needed); status, if present, should be a sensible value (hiring/seeking/open/freelance/learning).
 - The html/css contains NO <script>, no event handlers (onclick etc.), and no external network/resource loads (no http(s):// urls, no @import). Creative CSS animation is fine.
 
 Do NOT reject over a filename that doesn't match the author's handle — people pick fun handles, and that mismatch alone is fine. Prefer entries that fill their region and size things relatively (%, vw/vh, clamp, flex) rather than tiny fixed-pixel art floating in the box, but only REJECT for the safety/abuse rules above, not for style.
