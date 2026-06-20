@@ -54,6 +54,10 @@ a caption + status pill under the card; **do not repeat them in your html/css**)
   `freelance`, or `learning`. Only set it if they tell you their situation.
   Ask the attendee if they'd like to add any of these (e.g. "are you hiring, job
   hunting, or just here to play?") — but it's totally optional.
+- `hiringFor` — only with `status: hiring`. The role(s) they're hiring for, e.g.
+  `"Developer Relations Engineer"`. The pill then reads "Hiring · DevRel" instead
+  of just "Hiring". Note: this is the role they're HIRING for, which may differ
+  from their OWN `role` (e.g. a Product person hiring a DevRel).
 
 **The wall renders role / status / @handle for you, below the card.** Your `html`
 is ONLY the name + creative art — never re-print the role, company, status, or

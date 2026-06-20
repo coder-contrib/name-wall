@@ -76,7 +76,7 @@ function keyOf(n) {
 // its content actually changes (no flicker on unrelated polls).
 function sigOf(n) {
   return JSON.stringify([n.name, n.handle, n.color, n.html, n.css,
-    n.role, n.tagline, n.status]);
+    n.role, n.tagline, n.status, n.hiringFor || n.hiring_for]);
 }
 
 // Build the sandboxed HTML document for one name. Each entry gets a full
@@ -102,8 +102,12 @@ function docFor(n) {
     freelance: "Freelancing",
     learning: "Learning",
   }[statusKey] || "";
+  // When hiring, optionally say WHAT they're hiring for (e.g. "Hiring · DevRel").
+  const hiringFor = esc(n.hiringFor || n.hiring_for || "");
+  const pillText = (statusKey === "hiring" && hiringFor)
+    ? `Hiring · ${hiringFor}` : statusLabel;
   const pill = statusLabel
-    ? `<div class="status st-${esc(statusKey)}">${esc(statusLabel)}</div>` : "";
+    ? `<div class="status st-${esc(statusKey)}">${esc(pillText)}</div>` : "";
   const hasShowcase = !!(role || tagline || statusLabel);
   const caption = (role || tagline)
     ? `<div class="showcase">${role ? `<span class="role">${role}</span>` : ""}` +
@@ -141,11 +145,11 @@ function docFor(n) {
     .fallback{font-size:clamp(1.4rem,9vw,3rem);font-weight:800;text-shadow:0 0 24px currentColor;}
     /* Default (no-custom-html) card: name-led, on-brand, one centered stack. */
     .card-default{display:flex;flex-direction:column;align-items:center;justify-content:center;
-      width:100%;height:100%;background:var(--coder-ink);padding:9% 7%;box-sizing:border-box;
-      gap:clamp(.35em,2.5%,.7em);text-align:center;}
+      width:100%;height:100%;background:var(--coder-ink);padding:6% 7%;box-sizing:border-box;
+      gap:clamp(.25em,1.8%,.5em);text-align:center;}
     .card-default .cd-name{font-family:var(--font-display);font-weight:600;
       color:var(--coder-white);letter-spacing:-.01em;line-height:1.05;
-      font-size:clamp(1.4rem,8vw,2.7rem);margin-bottom:.1em;}
+      font-size:clamp(1.5rem,11vw,3.1rem);margin-bottom:.05em;}
     /* In the default stack the showcase pieces are in normal flow (not the absolute
        overlay), so reset their absolute/overlay positioning here. */
     .card-default .showcase{position:static;font-family:var(--font-display);
