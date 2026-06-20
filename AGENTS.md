@@ -44,15 +44,25 @@ Create (or edit) exactly **one** file:
 - `css` — styles for the html, including `@keyframes` animations. Scope your
   selectors (e.g. a wrapper class) so they're self-contained.
 
-**Optional showcase fields** (plain text — the wall renders them as a caption +
-status pill under the art; leave them out if the person doesn't want them):
+**Optional showcase fields** (plain text — the wall renders them AUTOMATICALLY as
+a caption + status pill under the card; **do not repeat them in your html/css**):
 - `role` — what they do, e.g. `"Platform Engineer"`, `"CS Student"`, `"Founder"`.
+  Include company here if relevant, e.g. `"Developer Relations Engineer · Coder"`.
 - `tagline` — a short one-liner about them or what they're looking for. Keep it
   brief (it renders on a single line and ellipsizes if long).
 - `status` — one of `hiring`, `seeking` (a.k.a. `open` — open to work),
   `freelance`, or `learning`. Only set it if they tell you their situation.
   Ask the attendee if they'd like to add any of these (e.g. "are you hiring, job
   hunting, or just here to play?") — but it's totally optional.
+
+**The wall renders role / status / @handle for you, below the card.** Your `html`
+is ONLY the name + creative art — never re-print the role, company, status, or
+handle inside the card (that caused duplicate "Coder · Works at Coder" cards).
+
+**You can omit `html`/`css` entirely.** If the person just wants to be listed (no
+special look), leave them out — the default card is already **name-led and
+on-brand** (their name big and centered on Coder ink, with role/status/handle in
+the caption). Only add custom `html`/`css` when they want a specific look.
 
 ### Brand vs. expression (important)
 

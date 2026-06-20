@@ -86,9 +86,13 @@ function sigOf(n) {
 // entry's styles can't leak out and break the layout or other names.
 function docFor(n) {
   const handle = esc(n.handle || "");
+  // DEFAULT CARD (no custom html): a clean, name-led, on-brand card. The NAME is
+  // the hero; role/status/@handle come from the showcase overlay below — so the
+  // default never duplicates them. If a legacy `color` is set, honor it as the
+  // name color. Custom html (n.html) overrides this entirely.
   const body = n.html
     ? n.html
-    : `<div class="fallback" style="color:${esc(n.color || "#fff")}">${esc(n.name || handle)}</div>`;
+    : `<div class="card-default"><div class="cd-name"${n.color ? ` style="color:${esc(n.color)}"` : ""}>${esc(n.name || handle)}</div></div>`;
   const css = n.css || "";
   // Optional showcase fields (plain text — escaped). role + tagline render as a
   // small caption; status renders as a colored pill (hiring / seeking / open).
@@ -138,6 +142,12 @@ function docFor(n) {
        the space ABOVE the caption instead of floating with a gap below it. */
     body.has-showcase{padding-bottom:26%;box-sizing:border-box;align-items:center;}
     .fallback{font-size:clamp(1.4rem,9vw,3rem);font-weight:800;text-shadow:0 0 24px currentColor;}
+    /* Default (no-custom-html) card: name-led, on-brand. */
+    .card-default{display:flex;align-items:center;justify-content:center;
+      width:100%;height:100%;background:var(--coder-ink);padding:8% 7%;box-sizing:border-box;}
+    .card-default .cd-name{font-family:var(--font-display);font-weight:600;
+      color:var(--coder-white);letter-spacing:-.01em;line-height:1.05;text-align:center;
+      font-size:clamp(1.4rem,8vw,2.8rem);}
     .handle{position:absolute;bottom:5%;left:0;right:0;text-align:center;
       font-family:'FT System Mono','IBM Plex Mono',monospace;font-size:clamp(.5rem,3vw,.75rem);
       letter-spacing:-.02em;color:rgba(255,255,255,.55);}
