@@ -455,6 +455,8 @@ body[data-density="huge"]    #wall { --card-min: 100px; --card-max: 128px; --gap
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .filter-chip:hover { color: var(--coder-white); border-color: rgba(255, 255, 255, 0.3); }
+.filter-chip.empty { opacity: 0.45; }
+.filter-chip.empty:hover { opacity: 0.7; }
 .filter-chip .fc-count {
   font-size: 0.66rem;
   color: var(--coder-white);

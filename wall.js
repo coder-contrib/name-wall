@@ -88,8 +88,10 @@ function updateFilterBar(names) {
   for (const c of bar.children) {
     const cnt = counts[c.dataset.key] || 0;
     c.querySelector(".fc-count").textContent = cnt;
-    // Hide a status chip (except All) when nobody has that status yet.
-    c.hidden = c.dataset.key !== "all" && cnt === 0;
+    // Always show every chip with its count so the bar reads as a complete legend
+    // (e.g. Hiring 3 · Open to work 5 · Freelancing 0 · Learning 1).
+    c.hidden = false;
+    c.classList.toggle("empty", c.dataset.key !== "all" && cnt === 0);
   }
 }
 
