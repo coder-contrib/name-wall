@@ -56,27 +56,31 @@ function docFor(n) {
   return `<!doctype html><html><head><meta charset="utf-8"><style>
     html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;
       display:flex;align-items:center;justify-content:center;
-      font-family:'Lay Grotesk',system-ui,sans-serif;color:#e6e8ee;}
+      font-family:'Lay Grotesk','Plus Jakarta Sans',system-ui,sans-serif;color:rgb(237,237,237);}
     .fallback{font-size:clamp(1.4rem,9vw,3rem);font-weight:800;text-shadow:0 0 24px currentColor;}
     .handle{position:absolute;bottom:5%;left:0;right:0;text-align:center;
-      font-family:'FT System Mono',monospace;font-size:clamp(.5rem,3vw,.75rem);color:#8b93a7;}
+      font-family:'FT System Mono','IBM Plex Mono',monospace;font-size:clamp(.5rem,3vw,.75rem);
+      letter-spacing:-.02em;color:rgba(255,255,255,.55);}
+    /* Showcase strip — Coder Design System tokens (cyan/green/coral/purple),
+     * radius-full pills, mono labels. Literal values: an iframe can't read the
+     * parent page's CSS variables. */
     .overlay{position:absolute;left:0;right:0;bottom:0;padding:5% 5% 3%;
       display:flex;flex-direction:column;align-items:center;gap:.25em;
       pointer-events:none;}
-    .overlay.has-showcase{background:linear-gradient(180deg,transparent,rgba(8,10,18,.72));}
-    .overlay .showcase{font-family:'Lay Grotesk',system-ui,sans-serif;
-      font-size:clamp(.5rem,3vw,.8rem);line-height:1.2;color:#cdd2de;text-align:center;
-      max-width:96%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-    .overlay .role{font-weight:700;color:#e6e8ee;}
-    .overlay .dot{margin:0 .4em;color:#6b7280;}
-    .overlay .tagline{color:#aab0c0;}
-    .overlay .status{font-family:'FT System Mono',monospace;
-      font-size:clamp(.45rem,2.6vw,.7rem);font-weight:600;letter-spacing:.02em;
-      padding:.12em .6em;border-radius:999px;border:1px solid transparent;}
-    .overlay .status.st-hiring{color:#01f2ff;border-color:rgba(1,242,255,.5);background:rgba(1,242,255,.08);}
-    .overlay .status.st-seeking,.overlay .status.st-open,.overlay .status.st-open-to-work{color:#66ffab;border-color:rgba(102,255,171,.5);background:rgba(102,255,171,.08);}
-    .overlay .status.st-freelance{color:#ffd166;border-color:rgba(255,209,102,.5);background:rgba(255,209,102,.08);}
-    .overlay .status.st-learning{color:#c9a7ff;border-color:rgba(201,167,255,.5);background:rgba(201,167,255,.08);}
+    .overlay.has-showcase{background:linear-gradient(180deg,transparent,rgba(9,11,11,.78));}
+    .overlay .showcase{font-family:'Lay Grotesk','Plus Jakarta Sans',system-ui,sans-serif;
+      font-size:clamp(.5rem,3vw,.8rem);line-height:1.2;color:rgba(255,255,255,.82);text-align:center;
+      letter-spacing:.02em;max-width:96%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .overlay .role{font-weight:600;color:rgb(255,255,255);}
+    .overlay .dot{margin:0 .4em;color:rgba(255,255,255,.4);}
+    .overlay .tagline{color:rgba(255,255,255,.7);}
+    .overlay .status{font-family:'FT System Mono','IBM Plex Mono',monospace;
+      font-size:clamp(.45rem,2.6vw,.7rem);font-weight:500;letter-spacing:.02em;
+      padding:.14em .65em;border-radius:9999px;border:1px solid transparent;}
+    .overlay .status.st-hiring{color:rgb(1,242,255);border-color:rgba(1,242,255,.5);background:rgba(1,242,255,.08);}
+    .overlay .status.st-seeking,.overlay .status.st-open,.overlay .status.st-open-to-work{color:rgb(102,255,171);border-color:rgba(102,255,171,.5);background:rgba(102,255,171,.08);}
+    .overlay .status.st-freelance{color:rgb(255,128,103);border-color:rgba(255,128,103,.5);background:rgba(255,128,103,.08);}
+    .overlay .status.st-learning{color:rgb(188,124,255);border-color:rgba(188,124,255,.5);background:rgba(188,124,255,.08);}
     ${css}
   </style></head><body>${body}<div class="overlay${hasShowcase ? " has-showcase" : ""}">${caption}${pill}<div class="handle" style="position:static">@${handle}</div></div></body></html>`;
 }

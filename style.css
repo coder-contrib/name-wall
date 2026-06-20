@@ -1,3 +1,7 @@
+/* Google Fonts substitutes per the Coder Design System: Lay Grotesk -> Plus
+ * Jakarta Sans, FT System Mono -> IBM Plex Mono. @import MUST be first. */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
 /* Wall of Names — Coder brand styling
  * Tokens + type from the Coder Brand Design System. */
 
@@ -7,6 +11,12 @@
   font-weight: 400;
   font-display: swap;
   src: url("fonts/LayGrotesk-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Lay Grotesk";
+  font-weight: 500;
+  font-display: swap;
+  src: url("fonts/LayGrotesk-Medium.woff2") format("woff2");
 }
 @font-face {
   font-family: "Lay Grotesk";
@@ -32,6 +42,8 @@
   --coder-cyan: rgb(1, 242, 255);
   --coder-green: rgb(102, 255, 171);
   --coder-blue: rgb(72, 147, 252);
+  --coder-coral: rgb(255, 128, 103); /* warm coral — warning/attention */
+  --coder-ink-soft-2: rgb(58, 63, 75); /* off dot */
   --muted: rgba(255, 255, 255, 0.7);
   --border: rgba(255, 255, 255, 0.15);
 }
@@ -44,7 +56,7 @@ body {
   background:
     radial-gradient(1100px 520px at 50% -8%, var(--coder-purple-900), var(--coder-ink));
   color: var(--coder-white);
-  font-family: "Lay Grotesk", ui-sans-serif, system-ui, sans-serif;
+  font-family: "Lay Grotesk", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   display: flex;
   flex-direction: column;
 }
@@ -100,7 +112,7 @@ header .cta a {
 }
 header code,
 footer code {
-  font-family: "FT System Mono", ui-monospace, monospace;
+  font-family: "FT System Mono", "IBM Plex Mono", ui-monospace, monospace;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--border);
   padding: 0.1em 0.4em;
@@ -125,7 +137,7 @@ main#wall {
 }
 
 .name {
-  font-family: "Lay Grotesk", sans-serif;
+  font-family: "Lay Grotesk", "Plus Jakarta Sans", sans-serif;
   font-size: clamp(1.7rem, 4vw, 3.4rem);
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -145,7 +157,7 @@ main#wall {
 .name:hover { transform: scale(1.08) rotate(-1deg); }
 .name small {
   display: block;
-  font-family: "FT System Mono", monospace;
+  font-family: "FT System Mono", "IBM Plex Mono", monospace;
   font-size: 0.32em;
   font-weight: 500;
   color: var(--muted);
@@ -188,7 +200,7 @@ footer a:hover { color: var(--coder-purple-400); }
   align-items: center;
   gap: 0.5em;
   flex: 0 0 auto;
-  font-family: "FT System Mono", monospace;
+  font-family: "FT System Mono", "IBM Plex Mono", monospace;
   font-size: 0.85rem;
   color: var(--coder-ink);
   background: var(--coder-green);
@@ -226,7 +238,7 @@ footer a:hover { color: var(--coder-purple-400); }
   z-index: 20;
 }
 .queue-title {
-  font-family: "FT System Mono", monospace;
+  font-family: "FT System Mono", "IBM Plex Mono", monospace;
   font-size: 0.9rem;
   font-weight: 500;
   margin-bottom: 0.6rem;
@@ -250,7 +262,7 @@ footer a:hover { color: var(--coder-purple-400); }
 .queue li:last-child { border-bottom: none; }
 .queue .pr-user { color: var(--coder-purple-400); font-weight: 600; }
 .queue .pr-title { flex: 1; color: var(--coder-white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.queue .pr-num { color: var(--muted); font-family: "FT System Mono", monospace; }
+.queue .pr-num { color: var(--muted); font-family: "FT System Mono", "IBM Plex Mono", monospace; }
 .queue .queue-empty { color: var(--muted); border: none; }
 
 
@@ -307,7 +319,7 @@ body[data-density="huge"]    #wall { --card-min: 100px; --card-max: 128px; --gap
   z-index: 20;
 }
 .roster-title {
-  font-family: "FT System Mono", monospace;
+  font-family: "FT System Mono", "IBM Plex Mono", monospace;
   font-size: 0.9rem;
   font-weight: 500;
   color: var(--coder-cyan);
@@ -354,32 +366,32 @@ body[data-density="huge"]    #wall { --card-min: 100px; --card-max: 128px; --gap
   background: var(--muted);
 }
 .roster .r-dot.on {
-  background: var(--coder-green, #66ffab);
-  box-shadow: 0 0 8px var(--coder-green, #66ffab);
+  background: var(--coder-green);
+  box-shadow: 0 0 8px var(--coder-green);
 }
-.roster .r-dot.off { background: #3a3f4b; }
+.roster .r-dot.off { background: var(--coder-ink-soft-2); }
 .roster .r-user {
   flex: 1; color: var(--coder-white); font-weight: 600;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .roster .r-badge {
-  font-family: "FT System Mono", monospace;
+  font-family: "FT System Mono", "IBM Plex Mono", monospace;
   font-size: 0.7rem;
   padding: 0.05em 0.5em;
   border-radius: 999px;
   flex: 0 0 auto;
 }
-.roster .r-badge.ok { color: var(--coder-green, #66ffab); border: 1px solid rgba(102,255,171,0.4); }
+.roster .r-badge.ok { color: var(--coder-green); border: 1px solid rgba(102,255,171,0.4); }
 .roster .r-badge.need {
-  color: #ffd166; border: 1px solid rgba(255,209,102,0.5);
-  background: rgba(255,209,102,0.08); cursor: help;
+  color: var(--coder-coral); border: 1px solid rgba(255,128,103,0.5);
+  background: rgba(255,128,103,0.08); cursor: help;
 }
 .roster .roster-empty { color: var(--muted); border: none; font-size: 0.85rem; }
 
 
 /* ─── PR queue status badges ──────────────────────────────────────────────── */
 .queue .pr-status {
-  font-family: "FT System Mono", monospace;
+  font-family: "FT System Mono", "IBM Plex Mono", monospace;
   font-size: 0.68rem;
   padding: 0.05em 0.5em;
   border-radius: 999px;
@@ -389,9 +401,9 @@ body[data-density="huge"]    #wall { --card-min: 100px; --card-max: 128px; --gap
 }
 .queue .pr-status.st-reviewing          { color: var(--coder-cyan); border-color: rgba(1,242,255,0.4); }
 .queue .pr-status.st-re-review          { color: var(--coder-cyan); border-color: rgba(1,242,255,0.4); }
-.queue .pr-status.st-changes-requested  { color: #ffd166; border-color: rgba(255,209,102,0.5); background: rgba(255,209,102,0.08); }
-.queue .pr-status.st-conflicts          { color: #ff8067; border-color: rgba(255,128,103,0.5); background: rgba(255,128,103,0.08); }
-.queue .pr-status.st-approved           { color: var(--coder-green, #66ffab); border-color: rgba(102,255,171,0.4); }
+.queue .pr-status.st-changes-requested  { color: var(--coder-coral); border-color: rgba(255,128,103,0.5); background: rgba(255,128,103,0.08); }
+.queue .pr-status.st-conflicts          { color: var(--coder-coral); border-color: rgba(255,128,103,0.5); background: rgba(255,128,103,0.08); }
+.queue .pr-status.st-approved           { color: var(--coder-green); border-color: rgba(102,255,171,0.4); }
 .queue .pr-status.st-queued             { color: var(--muted); border-color: var(--border); }
 /* let the title shrink so the badge fits */
 .queue .pr-title { min-width: 0; }
