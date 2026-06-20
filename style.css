@@ -490,3 +490,68 @@ body[data-density="huge"]    #wall { --card-min: 100px; --card-max: 128px; --gap
   outline: 1px solid rgba(1, 242, 255, 0.45);
   box-shadow: 0 0 0 1px rgba(1, 242, 255, 0.25), 0 8px 30px rgba(1, 242, 255, 0.12);
 }
+
+
+/* ───────────────────────────────────────────────────────────────────────────
+   MOBILE  (≤640px)
+   The default layout targets a projector (one fixed screen, no scroll, cards
+   shrink by count). On phones we instead let the wall SCROLL with comfortably
+   sized cards, stack the header, and hide the admin-only corner panels.
+   ─────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  html, body { height: auto; min-height: 100%; overflow-y: auto; }
+  header {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1rem 1rem 0.9rem;
+    text-align: center;
+  }
+  header .brand { gap: 0.5rem; }
+  header .logo { height: 22px; }
+  header .wordmark { font-size: 1rem; }
+  header .cta { gap: 0.25rem; }
+  header .cta-step { font-size: 0.95rem; }
+  header .cta-step:first-child { font-size: 1.05rem; }
+  header .cta-sub { font-size: 0.72rem; }
+  /* The activity pill (admin display) is irrelevant on a phone. */
+  header .activity { display: none !important; }
+
+  /* Wall: scrollable column of readable cards, NOT a fit-one-screen grid. */
+  main#wall {
+    align-content: flex-start;
+    overflow: visible;        /* let the whole page scroll naturally on a phone */
+    flex: 0 0 auto;
+    gap: 0.9rem;
+    padding: 1rem 0.9rem 2rem;
+  }
+  /* Ignore the count-driven density tiers on mobile — keep cards a comfortable,
+     readable size (two-up on most phones, one-up on very narrow). */
+  body[data-density] #wall {
+    --card-min: 150px;
+    --card-max: 230px;
+    --gap: 0.9rem;
+  }
+  #wall .name {
+    flex: 1 1 150px;
+    min-width: 150px;
+    max-width: none;
+  }
+
+  /* Admin-only corner panels overlap content on a phone — hide them. */
+  .roster, .queue { display: none !important; }
+
+  /* Filter bar: wrap nicely, comfy tap targets. */
+  .filterbar { gap: 0.4rem; padding: 0.4rem 0.8rem 0.8rem; }
+  .filter-chip { font-size: 0.78rem; padding: 0.4em 0.9em; }
+
+  footer { font-size: 0.8rem; padding: 0.8rem 1rem; text-align: center; }
+  /* No hover-scale on touch (it sticks after a tap). */
+  .name:hover { transform: none; }
+  #wall .name.has-link:hover { box-shadow: 0 6px 30px rgba(0,0,0,0.3); outline: none; }
+}
+
+/* Very narrow phones: single column for legibility. */
+@media (max-width: 380px) {
+  #wall .name { flex-basis: 100%; min-width: 0; }
+}
