@@ -503,17 +503,17 @@ body[data-density="huge"]    #wall { --card-min: 100px; --card-max: 128px; --gap
   header {
     flex-direction: column;
     align-items: center;
-    gap: 0.6rem;
-    padding: 1rem 1rem 0.9rem;
+    gap: 0.85rem;
+    padding: 1.1rem 1.1rem 1rem;
     text-align: center;
   }
   header .brand { gap: 0.5rem; }
   header .logo { height: 22px; }
-  header .wordmark { font-size: 1rem; }
-  header .cta { gap: 0.25rem; }
-  header .cta-step { font-size: 0.95rem; }
-  header .cta-step:first-child { font-size: 1.05rem; }
-  header .cta-sub { font-size: 0.72rem; }
+  header .wordmark { font-size: 1.05rem; }
+  header .cta { gap: 0.5rem; }
+  header .cta-step { font-size: 0.95rem; line-height: 1.45; }
+  header .cta-step:first-child { font-size: 1.05rem; line-height: 1.4; }
+  header .cta-sub { font-size: 0.74rem; line-height: 1.5; margin-top: 0.15rem; }
   /* The activity pill (admin display) is irrelevant on a phone. */
   header .activity { display: none !important; }
 
