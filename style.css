@@ -53,8 +53,13 @@
 body {
   margin: 0;
   min-height: 100vh;
+  /* Coder brand supergraphic (surface-reflection-dark), full-bleed and fixed,
+   * with the brand purple->ink gradient layered ON TOP as a scrim so the name
+   * cards and text stay legible on a projector. Topmost layer is listed first. */
   background:
-    radial-gradient(1100px 520px at 50% -8%, var(--coder-purple-900), var(--coder-ink));
+    radial-gradient(1100px 520px at 50% -8%, rgba(41, 36, 68, 0.55), rgba(9, 11, 11, 0.82)),
+    url("assets/bg-surface-reflection-dark.png") center / cover no-repeat fixed,
+    var(--coder-ink);
   color: var(--coder-white);
   font-family: "Lay Grotesk", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   display: flex;
