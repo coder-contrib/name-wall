@@ -458,17 +458,14 @@ body[data-density="huge"]    #wall { --card-min: 100px; --card-max: 128px; --gap
 .filter-chip.empty { opacity: 0.45; }
 .filter-chip.empty:hover { opacity: 0.7; }
 .filter-chip .fc-count {
-  font-size: 0.66rem;
+  font-size: 0.72rem;
   color: var(--coder-white);
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 9999px;
-  padding: 0.05em 0.5em;
-  min-width: 1.2em;
-  text-align: center;
+  font-weight: 600;
 }
+.filter-chip .fc-dash { color: var(--muted); }
 /* Active chip: brand accent. Each status gets its own brand color when active. */
 .filter-chip.on { color: var(--coder-ink); border-color: transparent; }
-.filter-chip.on .fc-count { background: rgba(9, 11, 11, 0.18); color: var(--coder-ink); }
+.filter-chip.on .fc-count, .filter-chip.on .fc-dash { color: var(--coder-ink); }
 .filter-chip[data-key="all"].on       { background: var(--coder-white); }
 .filter-chip[data-key="hiring"].on     { background: var(--coder-cyan); }
 .filter-chip[data-key="seeking"].on    { background: var(--coder-green); }
@@ -478,4 +475,18 @@ body[data-density="huge"]    #wall { --card-min: 100px; --card-max: 128px; --gap
 /* Cards hidden by the active filter fade out and collapse (calm, no jump). */
 #wall .name.filtered-out {
   display: none;
+}
+
+
+/* ─── Clickable cards (when the person shared a contact link) ──────────────── */
+#wall .name.has-link {
+  cursor: pointer;
+}
+/* Let clicks fall through the iframe to the parent card's click handler. */
+#wall .name.has-link .name-frame {
+  pointer-events: none;
+}
+#wall .name.has-link:hover {
+  outline: 1px solid rgba(1, 242, 255, 0.45);
+  box-shadow: 0 0 0 1px rgba(1, 242, 255, 0.25), 0 8px 30px rgba(1, 242, 255, 0.12);
 }

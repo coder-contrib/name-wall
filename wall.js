@@ -77,7 +77,7 @@ function updateFilterBar(names) {
       const chip = document.createElement("button");
       chip.className = "filter-chip" + (f.key === activeFilter ? " on" : "");
       chip.dataset.key = f.key;
-      chip.innerHTML = `<span class="fc-label">${f.label}</span> <span class="fc-count"></span>`;
+      chip.innerHTML = `<span class="fc-label">${f.label}</span><span class="fc-dash"> – </span><span class="fc-count"></span>`;
       chip.addEventListener("click", () => setFilter(f.key));
       bar.appendChild(chip);
     }
@@ -305,9 +305,19 @@ const present = new Set();
       card.className = "name name--enter";
       card.dataset.handle = k;
       card.dataset.status = statusKeyOf(n);
+      // Make the WHOLE card clickable when the person shared a contact link.
+      const lk = safeLink(n.link || n.url, n.contact);
+      if (lk) {
+        card.classList.add("has-link");
+        card.dataset.link = lk.href;
+        card.title = `Open ${lk.label}`;
+        card.addEventListener("click", () => {
+          if (card.dataset.link) window.open(card.dataset.link, "_blank", "noopener,noreferrer");
+        });
+      }
       const frame = document.createElement("iframe");
       frame.className = "name-frame";
-      frame.setAttribute("sandbox", "allow-popups allow-popups-to-escape-sandbox"); // popups only for the contact link; NO scripts, no same-origin
+      frame.setAttribute("sandbox", ""); // CSS only — no scripts, no popups; the parent card handles clicks
       frame.setAttribute("scrolling", "no");
       frame.srcdoc = docFor(n);
       card.appendChild(frame);
@@ -318,6 +328,17 @@ const present = new Set();
       // content changed → refresh the iframe in place (no re-animate)
       entry.frame.srcdoc = docFor(n);
       entry.card.dataset.status = statusKeyOf(n);
+      // keep the card-level link in sync
+      const lk2 = safeLink(n.link || n.url, n.contact);
+      if (lk2) {
+        entry.card.classList.add("has-link");
+        entry.card.dataset.link = lk2.href;
+        entry.card.title = `Open ${lk2.label}`;
+      } else {
+        entry.card.classList.remove("has-link");
+        delete entry.card.dataset.link;
+        entry.card.removeAttribute("title");
+      }
       entry.sig = sig;
     }
   }
