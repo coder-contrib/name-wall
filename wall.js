@@ -6,6 +6,68 @@ const wall = document.getElementById("wall");
 const countEl = document.getElementById("count");
 const seen = new Map(); // handle -> { card, frame, sig }
 
+// ─── Status filter (networking: Hiring / Open to work / Freelancing / Learning) ──
+// The filter bar doubles as a live legend with per-status counts. It works on the
+// personal-device view (click to filter) and reads as an at-a-glance legend on the
+// projected display. State is mirrored in the URL (?filter=hiring) so a view can be
+// pinned or shared.
+const FILTERS = [
+  { key: "all",       label: "All" },
+  { key: "hiring",    label: "Hiring" },
+  { key: "seeking",   label: "Open to work" },
+  { key: "freelance", label: "Freelancing" },
+  { key: "learning",  label: "Learning" },
+];
+let activeFilter = (new URLSearchParams(location.search).get("filter") || "all").toLowerCase();
+if (!FILTERS.some((f) => f.key === activeFilter)) activeFilter = "all";
+
+function setFilter(key) {
+  activeFilter = key;
+  const u = new URL(location.href);
+  if (key === "all") u.searchParams.delete("filter");
+  else u.searchParams.set("filter", key);
+  history.replaceState(null, "", u);
+  const bar = document.getElementById("filterbar");
+  if (bar) for (const c of bar.children) c.classList.toggle("on", c.dataset.key === key);
+  applyFilter();
+}
+
+function updateFilterBar(names) {
+  let bar = document.getElementById("filterbar");
+  if (!bar) {
+    bar = document.createElement("nav");
+    bar.id = "filterbar";
+    bar.className = "filterbar";
+    // Insert just above the wall.
+    wall.parentNode.insertBefore(bar, wall);
+    for (const f of FILTERS) {
+      const chip = document.createElement("button");
+      chip.className = "filter-chip" + (f.key === activeFilter ? " on" : "");
+      chip.dataset.key = f.key;
+      chip.innerHTML = `<span class="fc-label">${f.label}</span> <span class="fc-count"></span>`;
+      chip.addEventListener("click", () => setFilter(f.key));
+      bar.appendChild(chip);
+    }
+  }
+  // Live counts per status.
+  const counts = { all: names.length, hiring: 0, seeking: 0, freelance: 0, learning: 0 };
+  for (const n of names) { const k = statusKeyOf(n); if (k) counts[k]++; }
+  for (const c of bar.children) {
+    const cnt = counts[c.dataset.key] || 0;
+    c.querySelector(".fc-count").textContent = cnt;
+    // Hide a status chip (except All) when nobody has that status yet.
+    c.hidden = c.dataset.key !== "all" && cnt === 0;
+  }
+}
+
+// Show/hide cards to match the active filter. "all" shows everything.
+function applyFilter() {
+  for (const [, entry] of seen) {
+    const match = activeFilter === "all" || entry.card.dataset.status === activeFilter;
+    entry.card.classList.toggle("filtered-out", !match);
+  }
+}
+
 function keyOf(n) {
   return n.handle || n.name || JSON.stringify(n);
 }
@@ -32,12 +94,13 @@ function docFor(n) {
   // small caption; status renders as a colored pill (hiring / seeking / open).
   const role = esc(n.role || "");
   const tagline = esc(n.tagline || "");
-  const statusKey = String(n.status || "").toLowerCase().replace(/[^a-z-]/g, "");
+  const statusKey = String(n.status || "").toLowerCase().trim().replace(/\s+/g, "-").replace(/[^a-z-]/g, "");
   const statusLabel = {
     hiring: "Hiring",
     seeking: "Open to work",
     open: "Open to work",
     "open-to-work": "Open to work",
+    opentowork: "Open to work",
     freelance: "Freelancing",
     learning: "Learning",
   }[statusKey] || "";
@@ -125,7 +188,16 @@ async function tick() {
     if (child.nodeType !== 1 || !child.classList.contains("name")) child.remove();
   }
 
-  const present = new Set();
+  // Normalize a name's status into a canonical filter key (or "" for none).
+function statusKeyOf(n) {
+  const k = String(n.status || "").toLowerCase().trim()
+    .replace(/\s+/g, "-").replace(/[^a-z-]/g, "");
+  if (k === "open" || k === "open-to-work" || k === "opentowork") return "seeking";
+  if (["hiring", "seeking", "freelance", "learning"].includes(k)) return k;
+  return "";
+}
+
+const present = new Set();
   for (const n of names) {
     const k = keyOf(n);
     present.add(k);
@@ -136,6 +208,7 @@ async function tick() {
       const card = document.createElement("div");
       card.className = "name name--enter";
       card.dataset.handle = k;
+      card.dataset.status = statusKeyOf(n);
       const frame = document.createElement("iframe");
       frame.className = "name-frame";
       frame.setAttribute("sandbox", ""); // no scripts, no same-origin → CSS only
@@ -148,6 +221,7 @@ async function tick() {
     } else if (entry.sig !== sig) {
       // content changed → refresh the iframe in place (no re-animate)
       entry.frame.srcdoc = docFor(n);
+      entry.card.dataset.status = statusKeyOf(n);
       entry.sig = sig;
     }
   }
@@ -161,6 +235,8 @@ async function tick() {
 
   countEl.textContent = String(names.length);
   document.body.dataset.density = densityFor(names.length);
+  updateFilterBar(names);
+  applyFilter();
 
   // Empty state. Before the first successful load show a calm "Connecting"
   // message (the app-proxy tunnel may still be warming); only show the real

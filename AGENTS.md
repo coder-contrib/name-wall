@@ -54,29 +54,29 @@ status pill under the art; leave them out if the person doesn't want them):
   Ask the attendee if they'd like to add any of these (e.g. "are you hiring, job
   hunting, or just here to play?") — but it's totally optional.
 
-### Brand by default (important)
+### Brand vs. expression (important)
 
-Unless the attendee explicitly asks for a custom or wacky look, **style the card
-with the Coder brand** — clean and on-brand, not random. The wall already loads
-the brand fonts and exposes design tokens **inside every card**, so just use them:
+This wall is about people **expressing themselves** and networking — expression
+is encouraged, and you should NOT force the Coder brand on everyone. The rule:
 
-- **Fonts:** use `var(--font-display)` (Lay Grotesk) for names/headings and
-  `var(--font-mono)` (FT System Mono) for labels. Do NOT use `Courier New`,
-  `Arial`, `Georgia`, etc. — those read as off-brand.
-- **Colors — use the tokens, never invent hex:** background `var(--coder-ink)`
-  (#090B0B), text `var(--coder-white)`; accents are the brand family —
-  `var(--coder-purple-600)` (#7511e2, the primary electric purple),
+- **If the attendee asks for a look** ("make it neon green", "rainbow bouncing
+  letters", "a cookie", "vaporwave") — give them THAT. Their vibe wins; do not
+  Coder-ify it. Go wild.
+- **Default to the Coder brand only when** (a) they **work at Coder**, or (b) they
+  **don't specify any style** at all. In those cases, make a clean, on-brand card
+  rather than something random.
+
+When you do go on-brand (Coder folks / unspecified), the wall already loads the
+brand fonts and exposes design tokens **inside every card**, so use them:
+- **Fonts:** `var(--font-display)` (Lay Grotesk) for names, `var(--font-mono)`
+  (FT System Mono) for labels — not `Courier New`/`Arial`/`Georgia`.
+- **Colors via tokens, no invented hex:** bg `var(--coder-ink)`, text
+  `var(--coder-white)`, accents `var(--coder-purple-600)` (#7511e2, primary),
   `var(--coder-cyan)`, `var(--coder-green)`, `var(--coder-magenta)`,
-  `var(--coder-coral)`. **Never** use red, lime, hot-pink, etc. that aren't in
-  the palette (e.g. do not invent a red like #F54242).
-- **The word "Coder" is purple, not red, and never a fake logo.** If someone
-  works at Coder, render "Coder" in `var(--coder-purple-600)` (or white). Don't
-  fabricate a wordmark with arbitrary colors.
-- Subtle motion is fine (gentle pulse/gradient drift). Keep it tasteful by
-  default; save the loud stuff for when they ask.
+  `var(--coder-coral)`. **The word "Coder" is purple, never red, never a fake
+  logo** (don't invent something like #F54242).
 
-Only deviate from the brand when the attendee asks for it ("make it neon green",
-"rainbow bouncing letters", "a cookie"). Then go wild — their request wins.
+So: branded-by-default for Coder/unspecified, fully custom the moment they ask.
 
 Each card renders inside a **sandboxed iframe** that is your name's own region
 on the wall. Design for it as a **responsive box**, not a fixed canvas:
