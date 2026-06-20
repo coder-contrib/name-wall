@@ -303,7 +303,7 @@ async function rosterTick() {
     return a.username.localeCompare(b.username);
   });
   const onlineCount = members.filter((u) => u.online).length;
-  count.textContent = onlineCount + "/" + members.length;
+  count.textContent = String(onlineCount);
 
   let emptyLi = list.querySelector(".roster-empty");
   if (!members.length) {
