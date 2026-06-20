@@ -1,0 +1,11 @@
+{
+  "handle": "type_tomas",
+  "name": "Tomás",
+  "html": "<div class=\"sw\"><div class=\"bar\"></div><div class=\"nm\">Tomás</div><div class=\"rl\">DESIGN LEAD</div><div class=\"hr\">— hiring designers —</div></div>",
+  "css": ".sw{width:100%;height:100%;background:#f4f4f0;color:#111;display:flex;flex-direction:column;justify-content:center;padding:10%;box-sizing:border-box;font-family:Helvetica,Arial,sans-serif}.bar{width:30%;height:6px;background:#e0142f;margin-bottom:8%}.nm{font-size:clamp(1.3rem,6vw,2.6rem);font-weight:700;line-height:1}.rl{font-size:clamp(.55rem,2.4vw,.9rem);letter-spacing:.3em;margin-top:.4em;color:#555}.hr{margin-top:auto;font-size:clamp(.5rem,2.2vw,.8rem);color:#e0142f;letter-spacing:.1em}",
+  "role": "Design Lead",
+  "tagline": "Hiring designers who love whitespace as much as I do.",
+  "status": "hiring",
+  "link": "https://linkedin.com/in/typetomas",
+  "hiringFor": "Product Designers"
+}

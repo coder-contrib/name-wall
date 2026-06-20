@@ -1,0 +1,10 @@
+{
+  "handle": "duckdebug",
+  "name": "Pat",
+  "html": "<div class=\"dk\"><div class=\"duck\"><div class=\"body\"></div><div class=\"head\"><div class=\"eye\"></div><div class=\"beak\"></div></div></div><div class=\"nm\">Pat · QA</div></div>",
+  "css": ".dk{width:100%;height:100%;background:linear-gradient(#bfe3ff,#7fb8e6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5em;font-family:system-ui}.duck{position:relative;width:50%;aspect-ratio:1/.8}.body{position:absolute;bottom:8%;left:8%;width:78%;height:55%;background:#ffd83d;border-radius:50% 60% 45% 60%}.head{position:absolute;top:6%;right:6%;width:42%;aspect-ratio:1;background:#ffd83d;border-radius:50%}.eye{position:absolute;top:32%;left:30%;width:14%;aspect-ratio:1;background:#222;border-radius:50%}.beak{position:absolute;top:46%;left:-26%;width:40%;height:22%;background:#ff8a00;border-radius:40% 50% 50% 40%}.nm{color:#1a3a5a;font-weight:700;font-size:clamp(.6rem,2.6vw,1rem)}",
+  "role": "QA Engineer",
+  "tagline": "I talk to ducks professionally. Open to a new pond.",
+  "status": "seeking",
+  "link": "mailto:pat@example.com"
+}

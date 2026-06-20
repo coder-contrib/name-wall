@@ -1,0 +1,10 @@
+{
+  "handle": "retro_rachel",
+  "name": "Rachel K.",
+  "html": "<div class=\"t\"><div class=\"scan\"></div><div class=\"txt\"><span class=\"p\">guest@wall</span>:~$ <span class=\"c\">whoami</span><br><span class=\"g\">&gt; Rachel — frontend dev</span><br><span class=\"g\">&gt; status: OPEN_TO_WORK</span><span class=\"cur\">_</span></div></div>",
+  "css": ".t{width:100%;height:100%;background:#020c02;font-family:\"Courier New\",monospace;position:relative;overflow:hidden;border:1px solid #0f0;box-sizing:border-box}.scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,255,0,.06)0 2px,transparent 2px 4px);pointer-events:none}.txt{padding:9%;font-size:clamp(.55rem,2.6vw,1rem);color:#0f0;line-height:1.6;text-shadow:0 0 6px #0f0}.p{color:#0ff}.c{color:#ff0}.g{color:#7CFC00}.cur{animation:b 1s steps(1)infinite}@keyframes b{50%{opacity:0}}",
+  "role": "Frontend Engineer",
+  "tagline": "10y of CSS wizardry. Will animate for snacks.",
+  "status": "seeking",
+  "link": "https://github.com/retro_rachel"
+}

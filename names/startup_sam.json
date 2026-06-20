@@ -1,0 +1,11 @@
+{
+  "handle": "startup_sam",
+  "name": "Sam Rivera",
+  "html": "<div class=\"g\"><div class=\"blob b1\"></div><div class=\"blob b2\"></div><div class=\"ct\"><div class=\"nm\">Sam Rivera</div><div class=\"rl\">we're hiring 🚀</div></div></div>",
+  "css": ".g{width:100%;height:100%;position:relative;overflow:hidden;background:#0a0a14;display:flex;align-items:center;justify-content:center;font-family:system-ui}.blob{position:absolute;border-radius:50%;filter:blur(28px);opacity:.8}.b1{width:60%;aspect-ratio:1;background:#ff3d81;top:-10%;left:-10%;animation:f1 7s ease-in-out infinite}.b2{width:55%;aspect-ratio:1;background:#5b8cff;bottom:-10%;right:-10%;animation:f2 8s ease-in-out infinite}.ct{position:relative;z-index:2;text-align:center;color:#fff}.nm{font-size:clamp(1.1rem,5vw,2.3rem);font-weight:800}.rl{margin-top:.3em;font-size:clamp(.6rem,2.6vw,1rem);opacity:.95}@keyframes f1{50%{transform:translate(20%,15%)}}@keyframes f2{50%{transform:translate(-18%,-12%)}}",
+  "role": "Founder @ Stealth",
+  "tagline": "Building the future of toast. Seriously.",
+  "status": "hiring",
+  "link": "https://linkedin.com/in/samrivera",
+  "hiringFor": "Full-stack Engineers"
+}

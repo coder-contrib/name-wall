@@ -1,0 +1,10 @@
+{
+  "handle": "neo_nina",
+  "name": "Nina",
+  "html": "<div class=\"mx\"><div class=\"col c1\">01101</div><div class=\"col c2\">10010</div><div class=\"col c3\">11001</div><div class=\"col c4\">00110</div><div class=\"ct\"><div class=\"nm\">NINA</div><div class=\"sub\">open to work</div></div></div>",
+  "css": ".mx{width:100%;height:100%;background:#000;position:relative;overflow:hidden;font-family:monospace;display:flex;align-items:center;justify-content:center}.col{position:absolute;top:-30%;color:#0f0;font-size:.7rem;writing-mode:vertical-rl;letter-spacing:2px;opacity:.6;animation:fall 4s linear infinite;text-shadow:0 0 6px #0f0}.c1{left:12%}.c2{left:37%;animation-delay:1s}.c3{left:62%;animation-delay:2s}.c4{left:84%;animation-delay:.5s}.ct{position:relative;z-index:2;text-align:center;background:rgba(0,0,0,.5);padding:.4em .8em;border:1px solid #0f0}.nm{color:#0f0;font-size:clamp(1.1rem,5vw,2.2rem);font-weight:700;text-shadow:0 0 8px #0f0}.sub{color:#9f9;font-size:clamp(.5rem,2.3vw,.85rem)}@keyframes fall{to{top:120%}}",
+  "role": "ML Engineer",
+  "tagline": "Follow the white rabbit (to my GitHub).",
+  "status": "seeking",
+  "link": "https://github.com/neo_nina"
+}

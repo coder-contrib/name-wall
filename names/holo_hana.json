@@ -1,0 +1,10 @@
+{
+  "handle": "holo_hana",
+  "name": "Hana",
+  "html": "<div class=\"ho\"><div class=\"foil\"></div><div class=\"ct\"><div class=\"nm\">HANA</div><div class=\"sub\">open to work</div></div></div>",
+  "css": ".ho{width:100%;height:100%;position:relative;overflow:hidden;background:#111;display:flex;align-items:center;justify-content:center;font-family:system-ui}.foil{position:absolute;inset:0;background:linear-gradient(115deg,#ff6ec4,#7873f5,#4ade80,#facc15,#ff6ec4);background-size:300% 300%;animation:shift 5s ease infinite;opacity:.85}.ct{position:relative;z-index:2;text-align:center;color:#111;background:rgba(255,255,255,.18);backdrop-filter:blur(2px);padding:.5em 1em;border-radius:10px}.nm{font-size:clamp(1.3rem,6vw,2.6rem);font-weight:900;color:#fff;mix-blend-mode:overlay}.sub{color:#fff;font-size:clamp(.5rem,2.4vw,.9rem);font-weight:600}@keyframes shift{0%,100%{background-position:0 50%}50%{background-position:100% 50%}}",
+  "role": "Product Engineer",
+  "tagline": "Shiny on the outside, solid code on the inside.",
+  "status": "seeking",
+  "link": "https://hana.codes"
+}

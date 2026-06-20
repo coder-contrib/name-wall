@@ -1,0 +1,10 @@
+{
+  "handle": "heartbeat_hank",
+  "name": "Hank",
+  "html": "<div class=\"hb\"><div class=\"line\"></div><div class=\"nm\">Hank ♥ embedded</div></div>",
+  "css": ".hb{width:100%;height:100%;background:#0a0e14;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.8em;font-family:monospace}.line{width:80%;height:18%;background:linear-gradient(90deg,transparent,#ff3b5c,transparent);clip-path:polygon(0 50%,20% 50%,28% 10%,36% 90%,44% 50%,100% 50%,100% 52%,44% 52%,36% 92%,28% 12%,20% 52%,0 52%);animation:beat 1.2s ease-in-out infinite}.nm{color:#ff7088;font-size:clamp(.6rem,2.6vw,1rem)}@keyframes beat{0%,100%{transform:scale(1)}30%{transform:scale(1.08)}}",
+  "role": "Embedded Systems",
+  "tagline": "Low-level dev with a big heart. Looking for my next board.",
+  "status": "seeking",
+  "link": "https://github.com/heartbeat_hank"
+}

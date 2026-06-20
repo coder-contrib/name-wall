@@ -1,0 +1,10 @@
+{
+  "handle": "synthwave_sue",
+  "name": "Sue",
+  "html": "<div class=\"vhs\"><div class=\"sun\"></div><div class=\"grid\"></div><div class=\"nm\">SUE</div><div class=\"tag\">▶ now learning: everything</div></div>",
+  "css": ".vhs{width:100%;height:100%;background:linear-gradient(#1a0b2e 40%,#2a0a3a);position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;font-family:\"Arial Black\",sans-serif}.sun{width:46%;aspect-ratio:1;border-radius:50%;background:linear-gradient(#ff2e97,#ffd24a);margin-top:10%;box-shadow:0 0 40px #ff2e97}.grid{position:absolute;bottom:0;left:-25%;width:150%;height:42%;background:linear-gradient(rgba(255,46,151,.6)1px,transparent 1px),linear-gradient(90deg,rgba(255,46,151,.6)1px,transparent 1px);background-size:24px 24px;transform:perspective(160px)rotateX(62deg)}.nm{position:relative;z-index:2;color:#fff;font-size:clamp(1.4rem,7vw,3rem);margin-top:-18%;text-shadow:3px 3px #ff2e97}.tag{position:relative;z-index:2;color:#ffd24a;font-size:clamp(.5rem,2.3vw,.85rem);margin-top:.4em;font-family:monospace}",
+  "role": "Career Switcher → Dev",
+  "tagline": "Bootcamp grad. Will out-grind everyone. Give me a shot!",
+  "status": "learning",
+  "link": "https://github.com/synthwave_sue"
+}
