@@ -6,6 +6,37 @@ const wall = document.getElementById("wall");
 const countEl = document.getElementById("count");
 const seen = new Map(); // handle -> { card, frame, sig }
 
+// ─── Rotating example prompts in the header ──────────────────────────────────
+// Cycles fun + networking-oriented prompt ideas so attendees see the range of
+// what they can do (creative looks AND sharing they're hiring / job-hunting).
+const PROMPT_IDEAS = [
+  "make my name blue",
+  "rainbow bouncing letters",
+  "say I'm hiring a designer",
+  "neon sign with my name",
+  "I'm open to work — make it pop",
+  "matrix rain behind my name",
+  "add my role and that I'm freelancing",
+  "a glowing retro arcade vibe",
+  "I'm a student looking for an internship",
+  "make it look like fire",
+  "we're hiring engineers at my company",
+  "gradient that shifts like an aurora",
+];
+(function rotatePrompts() {
+  const el = document.getElementById("prompt-rotator");
+  if (!el) return;
+  let i = 0;
+  setInterval(() => {
+    el.classList.add("fading");
+    setTimeout(() => {
+      i = (i + 1) % PROMPT_IDEAS.length;
+      el.textContent = `“${PROMPT_IDEAS[i]}”`;
+      el.classList.remove("fading");
+    }, 350);
+  }, 3500);
+})();
+
 // ─── Status filter (networking: Hiring / Open to work / Freelancing / Learning) ──
 // The filter bar doubles as a live legend with per-status counts. It works on the
 // personal-device view (click to filter) and reads as an at-a-glance legend on the
