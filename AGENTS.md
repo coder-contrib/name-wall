@@ -58,6 +58,11 @@ a caption + status pill under the card; **do not repeat them in your html/css**)
   `"Developer Relations Engineer"`. The pill then reads "Hiring · DevRel" instead
   of just "Hiring". Note: this is the role they're HIRING for, which may differ
   from their OWN `role` (e.g. a Product person hiring a DevRel).
+- `link` — a contact/profile URL (LinkedIn, GitHub, personal site, or an email).
+  Bare domains and emails are fine (`linkedin.com/in/you`, `you@co.com`); it's
+  rendered as a clickable link under the card. Only http(s)/email are allowed.
+  Optional `contact` sets a custom label for the link instead of the URL text.
+  Great for networking — offer it when someone is hiring or open to work.
 
 **The wall renders role / status / @handle for you, below the card.** Your `html`
 is ONLY the name + creative art — never re-print the role, company, status, or

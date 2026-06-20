@@ -107,7 +107,7 @@ function keyOf(n) {
 // its content actually changes (no flicker on unrelated polls).
 function sigOf(n) {
   return JSON.stringify([n.name, n.handle, n.color, n.html, n.css,
-    n.role, n.tagline, n.status, n.hiringFor || n.hiring_for]);
+    n.role, n.tagline, n.status, n.hiringFor || n.hiring_for, n.link || n.url, n.contact]);
 }
 
 // Build the sandboxed HTML document for one name. Each entry gets a full
@@ -115,6 +115,29 @@ function sigOf(n) {
 // <iframe sandbox> with NO scripts allowed — so creative CSS is fully
 // supported while arbitrary JS / XSS can't run on the shared wall, and one
 // entry's styles can't leak out and break the layout or other names.
+// Sanitize a user-supplied contact URL. Only http/https allowed (no javascript:,
+// data:, etc.). Returns {href, label} or null. label is a friendly short form.
+function safeLink(raw, customLabel) {
+  let v = String(raw || "").trim();
+  if (!v) return null;
+  if (!/^https?:\/\//i.test(v)) {
+    // allow bare domains/emails: prefix sensibly
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) v = "mailto:" + v;
+    else if (/^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(v)) v = "https://" + v;
+    else return null;
+  }
+  let url;
+  try { url = new URL(v); } catch { return null; }
+  if (!/^(https?:|mailto:)$/i.test(url.protocol)) return null;
+  let label = customLabel
+    ? String(customLabel)
+    : url.protocol === "mailto:"
+      ? url.pathname
+      : (url.hostname.replace(/^www\./, "") + url.pathname).replace(/\/$/, "");
+  if (label.length > 40) label = label.slice(0, 39) + "\u2026";
+  return { href: url.href, label };
+}
+
 function docFor(n) {
   const handle = esc(n.handle || "");
   const isCustom = !!n.html;
@@ -139,7 +162,11 @@ function docFor(n) {
     ? `Hiring · ${hiringFor}` : statusLabel;
   const pill = statusLabel
     ? `<div class="status st-${esc(statusKey)}">${esc(pillText)}</div>` : "";
-  const hasShowcase = !!(role || tagline || statusLabel);
+  const lk = safeLink(n.link || n.url, n.contact);
+  const linkEl = lk
+    ? `<a class="contact" href="${esc(lk.href)}" target="_blank" rel="noopener noreferrer">${esc(lk.label)}</a>`
+    : "";
+  const hasShowcase = !!(role || tagline || statusLabel || lk);
   const caption = (role || tagline)
     ? `<div class="showcase">${role ? `<span class="role">${role}</span>` : ""}` +
       `${role && tagline ? `<span class="dot">·</span>` : ""}` +
@@ -194,6 +221,13 @@ function docFor(n) {
     .handle{position:absolute;bottom:5%;left:0;right:0;text-align:center;
       font-family:'FT System Mono','IBM Plex Mono',monospace;font-size:clamp(.5rem,3vw,.75rem);
       letter-spacing:-.02em;color:rgba(255,255,255,.55);}
+    /* Contact link — the ONLY clickable element (sandbox allows popups only). */
+    .contact{font-family:'FT System Mono','IBM Plex Mono',monospace;
+      font-size:clamp(.5rem,2.8vw,.72rem);letter-spacing:.01em;color:var(--coder-cyan);
+      text-decoration:none;border-bottom:1px solid rgba(1,242,255,.45);
+      pointer-events:auto;max-width:94%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .overlay .contact{position:relative;z-index:2;margin-top:.1em;}
+    .card-default .contact{margin-top:.2em;}
     /* Showcase strip — Coder Design System tokens (cyan/green/coral/purple),
      * radius-full pills, mono labels. Literal values: an iframe can't read the
      * parent page's CSS variables. */
@@ -216,8 +250,8 @@ function docFor(n) {
     .overlay .status.st-learning,.card-default .status.st-learning{color:rgb(188,124,255);border-color:rgba(188,124,255,.5);background:rgba(188,124,255,.08);}
     ${css}
   </style></head>${isCustom
-    ? `<body class="${hasShowcase ? 'has-showcase' : ''}">${n.html}<div class="overlay${hasShowcase ? ' has-showcase' : ''}">${caption}${pill}<div class="handle" style="position:static">@${handle}</div></div></body>`
-    : `<body class="default-body"><div class="card-default"><div class="cd-name"${n.color ? ` style="color:${esc(n.color)}"` : ''}>${esc(n.name || handle)}</div>${caption}${pill}<div class="handle" style="position:static">@${handle}</div></div></body>`}</html>`;
+    ? `<body class="${hasShowcase ? 'has-showcase' : ''}">${n.html}<div class="overlay${hasShowcase ? ' has-showcase' : ''}">${caption}${pill}<div class="handle" style="position:static">@${handle}</div>${linkEl}</div></body>`
+    : `<body class="default-body"><div class="card-default"><div class="cd-name"${n.color ? ` style="color:${esc(n.color)}"` : ''}>${esc(n.name || handle)}</div>${caption}${pill}<div class="handle" style="position:static">@${handle}</div>${linkEl}</div></body>`}</html>`;
 }
 
 
@@ -269,7 +303,7 @@ const present = new Set();
       card.dataset.status = statusKeyOf(n);
       const frame = document.createElement("iframe");
       frame.className = "name-frame";
-      frame.setAttribute("sandbox", ""); // no scripts, no same-origin → CSS only
+      frame.setAttribute("sandbox", "allow-popups allow-popups-to-escape-sandbox"); // popups only for the contact link; NO scripts, no same-origin
       frame.setAttribute("scrolling", "no");
       frame.srcdoc = docFor(n);
       card.appendChild(frame);
