@@ -437,7 +437,7 @@ body[data-density="huge"]    #wall { --card-min: 100px; --card-max: 128px; --gap
   flex-wrap: wrap;
   gap: 0.5rem;
   justify-content: center;
-  padding: 0.6rem 1rem 0.2rem;
+  padding: 0.3rem 1rem 0.7rem;
 }
 .filter-chip {
   font-family: "FT System Mono", "IBM Plex Mono", monospace;

@@ -69,8 +69,10 @@ function updateFilterBar(names) {
     bar = document.createElement("nav");
     bar.id = "filterbar";
     bar.className = "filterbar";
-    // Insert just above the wall.
-    wall.parentNode.insertBefore(bar, wall);
+    // Place the filter bar at the BOTTOM, just above the footer (after the wall).
+    const footer = document.querySelector("footer");
+    if (footer) footer.parentNode.insertBefore(bar, footer);
+    else wall.parentNode.appendChild(bar);
     for (const f of FILTERS) {
       const chip = document.createElement("button");
       chip.className = "filter-chip" + (f.key === activeFilter ? " on" : "");
