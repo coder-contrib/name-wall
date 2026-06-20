@@ -54,6 +54,20 @@ function docFor(n) {
   // clamp) against this box rather than a fixed pixel canvas. The showcase strip
   // is overlaid at the bottom (pointer-events:none) so it never blocks the art.
   return `<!doctype html><html><head><meta charset="utf-8"><style>
+    /* ─ Coder brand made available INSIDE every card iframe ─ fonts + tokens.
+       Cards inherit on-brand defaults; author css (appended later) can override. */
+    @font-face{font-family:'Lay Grotesk';font-weight:400;font-display:swap;src:url("fonts/LayGrotesk-Regular.woff2") format("woff2");}
+    @font-face{font-family:'Lay Grotesk';font-weight:500;font-display:swap;src:url("fonts/LayGrotesk-Medium.woff2") format("woff2");}
+    @font-face{font-family:'Lay Grotesk';font-weight:600;font-display:swap;src:url("fonts/LayGrotesk-Semibold.woff2") format("woff2");}
+    @font-face{font-family:'FT System Mono';font-weight:500;font-display:swap;src:url("fonts/FTSystemMono-Medium.woff2") format("woff2");}
+    :root{
+      --coder-ink:rgb(9,11,11);--coder-ink-soft:rgb(47,45,51);--coder-white:rgb(255,255,255);
+      --coder-purple-900:rgb(41,36,68);--coder-purple-600:rgb(117,17,226);--coder-purple-400:rgb(188,124,255);
+      --coder-magenta:rgb(240,141,255);--coder-cyan:rgb(1,242,255);--coder-green:rgb(102,255,171);
+      --coder-coral:rgb(255,128,103);--coder-blue:rgb(72,147,252);
+      --font-display:'Lay Grotesk','Plus Jakarta Sans',system-ui,sans-serif;
+      --font-mono:'FT System Mono','IBM Plex Mono',monospace;
+    }
     html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;
       display:flex;align-items:center;justify-content:center;
       font-family:'Lay Grotesk','Plus Jakarta Sans',system-ui,sans-serif;color:rgb(237,237,237);}

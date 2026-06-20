@@ -54,6 +54,30 @@ status pill under the art; leave them out if the person doesn't want them):
   Ask the attendee if they'd like to add any of these (e.g. "are you hiring, job
   hunting, or just here to play?") — but it's totally optional.
 
+### Brand by default (important)
+
+Unless the attendee explicitly asks for a custom or wacky look, **style the card
+with the Coder brand** — clean and on-brand, not random. The wall already loads
+the brand fonts and exposes design tokens **inside every card**, so just use them:
+
+- **Fonts:** use `var(--font-display)` (Lay Grotesk) for names/headings and
+  `var(--font-mono)` (FT System Mono) for labels. Do NOT use `Courier New`,
+  `Arial`, `Georgia`, etc. — those read as off-brand.
+- **Colors — use the tokens, never invent hex:** background `var(--coder-ink)`
+  (#090B0B), text `var(--coder-white)`; accents are the brand family —
+  `var(--coder-purple-600)` (#7511e2, the primary electric purple),
+  `var(--coder-cyan)`, `var(--coder-green)`, `var(--coder-magenta)`,
+  `var(--coder-coral)`. **Never** use red, lime, hot-pink, etc. that aren't in
+  the palette (e.g. do not invent a red like #F54242).
+- **The word "Coder" is purple, not red, and never a fake logo.** If someone
+  works at Coder, render "Coder" in `var(--coder-purple-600)` (or white). Don't
+  fabricate a wordmark with arbitrary colors.
+- Subtle motion is fine (gentle pulse/gradient drift). Keep it tasteful by
+  default; save the loud stuff for when they ask.
+
+Only deviate from the brand when the attendee asks for it ("make it neon green",
+"rainbow bouncing letters", "a cookie"). Then go wild — their request wins.
+
 Each card renders inside a **sandboxed iframe** that is your name's own region
 on the wall. Design for it as a **responsive box**, not a fixed canvas:
 - The region is roughly **4:3** and its width varies with how many names are on
