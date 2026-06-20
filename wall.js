@@ -167,10 +167,10 @@ function docFor(n) {
   const pill = statusLabel
     ? `<div class="status st-${esc(statusKey)}">${esc(pillText)}</div>` : "";
   const lk = safeLink(n.link || n.url, n.contact);
-  const linkEl = lk
-    ? `<a class="contact" href="${esc(lk.href)}" target="_blank" rel="noopener noreferrer">${esc(lk.label)}</a>`
-    : "";
-  const hasShowcase = !!(role || tagline || statusLabel || lk);
+  // The whole CARD is clickable to this link (handled on the parent .name div),
+  // so we don't render any in-card link text — keep the card clean.
+  const linkEl = "";
+  const hasShowcase = !!(role || tagline || statusLabel);
   const caption = (role || tagline)
     ? `<div class="showcase">${role ? `<span class="role">${role}</span>` : ""}` +
       `${role && tagline ? `<span class="dot">·</span>` : ""}` +
