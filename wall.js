@@ -134,6 +134,9 @@ function docFor(n) {
     html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;
       display:flex;align-items:center;justify-content:center;
       font-family:'Lay Grotesk','Plus Jakarta Sans',system-ui,sans-serif;color:rgb(237,237,237);}
+    /* When a showcase strip is shown, give the art a bottom inset so it centers in
+       the space ABOVE the caption instead of floating with a gap below it. */
+    body.has-showcase{padding-bottom:26%;box-sizing:border-box;align-items:center;}
     .fallback{font-size:clamp(1.4rem,9vw,3rem);font-weight:800;text-shadow:0 0 24px currentColor;}
     .handle{position:absolute;bottom:5%;left:0;right:0;text-align:center;
       font-family:'FT System Mono','IBM Plex Mono',monospace;font-size:clamp(.5rem,3vw,.75rem);
@@ -159,7 +162,7 @@ function docFor(n) {
     .overlay .status.st-freelance{color:rgb(255,128,103);border-color:rgba(255,128,103,.5);background:rgba(255,128,103,.08);}
     .overlay .status.st-learning{color:rgb(188,124,255);border-color:rgba(188,124,255,.5);background:rgba(188,124,255,.08);}
     ${css}
-  </style></head><body>${body}<div class="overlay${hasShowcase ? " has-showcase" : ""}">${caption}${pill}<div class="handle" style="position:static">@${handle}</div></div></body></html>`;
+  </style></head><body class="${hasShowcase ? 'has-showcase' : ''}">${body}<div class="overlay${hasShowcase ? " has-showcase" : ""}">${caption}${pill}<div class="handle" style="position:static">@${handle}</div></div></body></html>`;
 }
 
 
