@@ -86,13 +86,7 @@ function sigOf(n) {
 // entry's styles can't leak out and break the layout or other names.
 function docFor(n) {
   const handle = esc(n.handle || "");
-  // DEFAULT CARD (no custom html): a clean, name-led, on-brand card. The NAME is
-  // the hero; role/status/@handle come from the showcase overlay below — so the
-  // default never duplicates them. If a legacy `color` is set, honor it as the
-  // name color. Custom html (n.html) overrides this entirely.
-  const body = n.html
-    ? n.html
-    : `<div class="card-default"><div class="cd-name"${n.color ? ` style="color:${esc(n.color)}"` : ""}>${esc(n.name || handle)}</div></div>`;
+  const isCustom = !!n.html;
   const css = n.css || "";
   // Optional showcase fields (plain text — escaped). role + tagline render as a
   // small caption; status renders as a colored pill (hiring / seeking / open).
@@ -138,16 +132,30 @@ function docFor(n) {
     html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent;
       display:flex;align-items:center;justify-content:center;
       font-family:'Lay Grotesk','Plus Jakarta Sans',system-ui,sans-serif;color:rgb(237,237,237);}
-    /* When a showcase strip is shown, give the art a bottom inset so it centers in
-       the space ABOVE the caption instead of floating with a gap below it. */
-    body.has-showcase{padding-bottom:26%;box-sizing:border-box;align-items:center;}
+    /* Custom-art cards: when a showcase strip overlays the bottom, inset the art
+       so it centers ABOVE the caption instead of floating with a gap below. */
+    body.has-showcase{padding-bottom:24%;box-sizing:border-box;align-items:center;}
+    /* Default (no-custom-art) card: name + role + status + handle are ONE centered
+       vertical stack — balanced, not a floating name over a bottom-pinned caption. */
+    body.default-body{padding:0;}
     .fallback{font-size:clamp(1.4rem,9vw,3rem);font-weight:800;text-shadow:0 0 24px currentColor;}
-    /* Default (no-custom-html) card: name-led, on-brand. */
-    .card-default{display:flex;align-items:center;justify-content:center;
-      width:100%;height:100%;background:var(--coder-ink);padding:8% 7%;box-sizing:border-box;}
+    /* Default (no-custom-html) card: name-led, on-brand, one centered stack. */
+    .card-default{display:flex;flex-direction:column;align-items:center;justify-content:center;
+      width:100%;height:100%;background:var(--coder-ink);padding:9% 7%;box-sizing:border-box;
+      gap:clamp(.35em,2.5%,.7em);text-align:center;}
     .card-default .cd-name{font-family:var(--font-display);font-weight:600;
-      color:var(--coder-white);letter-spacing:-.01em;line-height:1.05;text-align:center;
-      font-size:clamp(1.4rem,8vw,2.8rem);}
+      color:var(--coder-white);letter-spacing:-.01em;line-height:1.05;
+      font-size:clamp(1.4rem,8vw,2.7rem);margin-bottom:.1em;}
+    /* In the default stack the showcase pieces are in normal flow (not the absolute
+       overlay), so reset their absolute/overlay positioning here. */
+    .card-default .showcase{position:static;font-family:var(--font-display);
+      font-size:clamp(.55rem,3.2vw,.9rem);line-height:1.25;color:rgba(255,255,255,.82);
+      letter-spacing:.01em;max-width:96%;}
+    .card-default .role{font-weight:600;color:var(--coder-white);}
+    .card-default .tagline{color:rgba(255,255,255,.66);}
+    .card-default .dot{margin:0 .4em;color:rgba(255,255,255,.4);}
+    .card-default .status{position:static;margin-top:.15em;}
+    .card-default .handle{position:static;margin-top:.35em;}
     .handle{position:absolute;bottom:5%;left:0;right:0;text-align:center;
       font-family:'FT System Mono','IBM Plex Mono',monospace;font-size:clamp(.5rem,3vw,.75rem);
       letter-spacing:-.02em;color:rgba(255,255,255,.55);}
@@ -164,15 +172,17 @@ function docFor(n) {
     .overlay .role{font-weight:600;color:rgb(255,255,255);}
     .overlay .dot{margin:0 .4em;color:rgba(255,255,255,.4);}
     .overlay .tagline{color:rgba(255,255,255,.7);}
-    .overlay .status{font-family:'FT System Mono','IBM Plex Mono',monospace;
+    .overlay .status,.card-default .status{font-family:'FT System Mono','IBM Plex Mono',monospace;
       font-size:clamp(.45rem,2.6vw,.7rem);font-weight:500;letter-spacing:.02em;
       padding:.14em .65em;border-radius:9999px;border:1px solid transparent;}
-    .overlay .status.st-hiring{color:rgb(1,242,255);border-color:rgba(1,242,255,.5);background:rgba(1,242,255,.08);}
-    .overlay .status.st-seeking,.overlay .status.st-open,.overlay .status.st-open-to-work{color:rgb(102,255,171);border-color:rgba(102,255,171,.5);background:rgba(102,255,171,.08);}
-    .overlay .status.st-freelance{color:rgb(255,128,103);border-color:rgba(255,128,103,.5);background:rgba(255,128,103,.08);}
-    .overlay .status.st-learning{color:rgb(188,124,255);border-color:rgba(188,124,255,.5);background:rgba(188,124,255,.08);}
+    .overlay .status.st-hiring,.card-default .status.st-hiring{color:rgb(1,242,255);border-color:rgba(1,242,255,.5);background:rgba(1,242,255,.08);}
+    .overlay .status.st-seeking,.overlay .status.st-open,.overlay .status.st-open-to-work,.card-default .status.st-seeking,.card-default .status.st-open,.card-default .status.st-open-to-work{color:rgb(102,255,171);border-color:rgba(102,255,171,.5);background:rgba(102,255,171,.08);}
+    .overlay .status.st-freelance,.card-default .status.st-freelance{color:rgb(255,128,103);border-color:rgba(255,128,103,.5);background:rgba(255,128,103,.08);}
+    .overlay .status.st-learning,.card-default .status.st-learning{color:rgb(188,124,255);border-color:rgba(188,124,255,.5);background:rgba(188,124,255,.08);}
     ${css}
-  </style></head><body class="${hasShowcase ? 'has-showcase' : ''}">${body}<div class="overlay${hasShowcase ? " has-showcase" : ""}">${caption}${pill}<div class="handle" style="position:static">@${handle}</div></div></body></html>`;
+  </style></head>${isCustom
+    ? `<body class="${hasShowcase ? 'has-showcase' : ''}">${n.html}<div class="overlay${hasShowcase ? ' has-showcase' : ''}">${caption}${pill}<div class="handle" style="position:static">@${handle}</div></div></body>`
+    : `<body class="default-body"><div class="card-default"><div class="cd-name"${n.color ? ` style="color:${esc(n.color)}"` : ''}>${esc(n.name || handle)}</div>${caption}${pill}<div class="handle" style="position:static">@${handle}</div></div></body>`}</html>`;
 }
 
 
