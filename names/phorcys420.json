@@ -1,0 +1,6 @@
+{
+  "handle": "phorcys420",
+  "name": "phorcys420",
+  "html": "<div class=\"phorcys-wrap\"><span class=\"phorcys-text\">phorcys420</span><div class=\"phorcys-glow\"></div></div>",
+  "css": ".phorcys-wrap { width: 100%; height: 100%; background: linear-gradient(135deg, #ff69b4 0%, #ff1493 40%, #ffb6c1 100%); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; } .phorcys-glow { position: absolute; width: 160%; height: 160%; background: radial-gradient(ellipse at 50% 50%, rgba(255,105,180,0.5) 0%, transparent 70%); animation: phorcys-pulse 2.4s ease-in-out infinite; } .phorcys-text { font-family: Georgia, serif; font-size: clamp(1.1rem, 5vw, 2rem); font-weight: 900; color: #fff; text-shadow: 0 0 12px #ff69b4, 0 0 28px #ff1493, 0 2px 4px rgba(0,0,0,0.3); letter-spacing: 0.05em; position: relative; z-index: 1; animation: phorcys-float 3s ease-in-out infinite; } @keyframes phorcys-pulse { 0%, 100% { transform: scale(1); opacity: 0.7; } 50% { transform: scale(1.15); opacity: 1; } } @keyframes phorcys-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }"
+}
