@@ -56,7 +56,13 @@ command -v jq >/dev/null || { echo "jq required"; exit 1; }
 GH_TOKEN="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
 if [ -n "$GH_TOKEN" ]; then
   export GH_TOKEN
-  # Make git operations (merge does a server-side merge via API, but be safe) use it.
+  # A stale ~/.config/gh/hosts.yml (e.g. from a prior failed `gh auth login`)
+  # persists on the workspace PVC and makes `gh auth status` exit non-zero even
+  # though GH_TOKEN itself is valid (one stored account fails validation). Since
+  # we authenticate purely via GH_TOKEN, drop any stored gh login so status is
+  # clean and deterministic.
+  rm -f "${GH_CONFIG_DIR:-$HOME/.config/gh}/hosts.yml" 2>/dev/null || true
+  # git operations use the same token.
   git config --global credential."https://github.com".helper \
     "!f() { echo username=x-access-token; echo password=$GH_TOKEN; }; f" 2>/dev/null || true
 fi
