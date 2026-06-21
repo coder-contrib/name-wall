@@ -415,6 +415,7 @@ let modalFrame = null;
 let modalTitle = null;
 let modalLinks = null;
 let modalHandle = null;
+let _blankTimer = null;
 let pendingExpand = (new URLSearchParams(location.search).get("expand") || "").toLowerCase() || null;
 
 function buildModal() {
@@ -445,7 +446,13 @@ function buildModal() {
 
 function renderModal(n) {
   if (!modalFrame) return;
-  modalFrame.srcdoc = docFor(n);
+  // Force a clean reload: blank first, then set the real content on the next
+  // frame. Reusing an iframe by overwriting srcdoc can leave it blank on a
+  // repeat open (browser doesn't always re-parse if it was mid-teardown), so we
+  // always give it a fresh parse.
+  const html = docFor(n);
+  modalFrame.srcdoc = "";
+  requestAnimationFrame(() => { if (modalFrame) modalFrame.srcdoc = html; });
   modalTitle.textContent = (n.name || n.handle || "") + (n.handle ? `  ·  @${n.handle}` : "");
   // Contributor + PR links live HERE (in the modal), not on the card hover. The
   // handle is the GitHub login by convention (names/<handle>.json).
@@ -470,6 +477,10 @@ function openModal(handle) {
   buildModal();
   const entry = seen.get(handle);
   if (!entry) { pendingExpand = handle; return; } // not rendered yet — open when it appears
+  // Cancel any pending "blank the iframe" timer from a previous close, otherwise
+  // it can fire right after we re-render and wipe the new content (blank modal
+  // on the 2nd+ open).
+  if (_blankTimer) { clearTimeout(_blankTimer); _blankTimer = null; }
   modalHandle = handle;
   renderModal(entry.name);
   modalEl.hidden = false;
@@ -488,7 +499,13 @@ function closeModal() {
   // clear ?expand= from the URL so a refresh doesn't re-open it
   const u = new URL(location.href);
   if (u.searchParams.has("expand")) { u.searchParams.delete("expand"); history.replaceState(null, "", u); }
-  setTimeout(() => { if (modalEl && modalEl.hidden) modalFrame.srcdoc = ""; }, 220);
+  // Blank the iframe a beat later to free it — but only if still closed, and
+  // track the timer so a quick reopen can cancel it (see openModal).
+  if (_blankTimer) clearTimeout(_blankTimer);
+  _blankTimer = setTimeout(() => {
+    _blankTimer = null;
+    if (modalEl && modalEl.hidden) modalFrame.srcdoc = "";
+  }, 220);
 }
 
 // Expose for external triggers (e.g. the preview flow can call
