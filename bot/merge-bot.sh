@@ -47,16 +47,21 @@ NO_REVIEW="${NO_REVIEW:-0}"
 
 command -v gh >/dev/null || { echo "gh CLI required"; exit 1; }
 command -v jq >/dev/null || { echo "jq required"; exit 1; }
-# Auth: prefer an existing gh login (Coder GitHub external-auth). If gh isn't
-# logged in but a GITHUB_TOKEN is in the env (baked into the admin display),
-# log in with it — so the bot works without the host doing the interactive
-# external-auth device flow.
-if ! gh auth status >/dev/null 2>&1; then
-  if [ -n "${GITHUB_TOKEN:-}" ]; then
-    echo "$GITHUB_TOKEN" | gh auth login --with-token >/dev/null 2>&1 || true
-    gh auth setup-git >/dev/null 2>&1 || true
-  fi
-  gh auth status >/dev/null 2>&1 || { echo "gh not authenticated (no login and no GITHUB_TOKEN)"; exit 1; }
+# Auth. Prefer a token from the env (the admin display bakes in GITHUB_TOKEN).
+# gh reads GH_TOKEN/GITHUB_TOKEN directly for API + PR ops, which works with a
+# plain `repo`-scope token. We deliberately do NOT use `gh auth login
+# --with-token` here: that path requires the token to ALSO carry `read:org`
+# (gh validates it) and would otherwise fail a repo-only PAT. Export GH_TOKEN so
+# every gh call authenticates, and set a git credential helper for pushes/merges.
+GH_TOKEN="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
+if [ -n "$GH_TOKEN" ]; then
+  export GH_TOKEN
+  # Make git operations (merge does a server-side merge via API, but be safe) use it.
+  git config --global credential."https://github.com".helper \
+    "!f() { echo username=x-access-token; echo password=$GH_TOKEN; }; f" 2>/dev/null || true
+fi
+if ! GH_TOKEN="$GH_TOKEN" gh auth status >/dev/null 2>&1; then
+  echo "gh not authenticated (set GITHUB_TOKEN/GH_TOKEN with repo scope, or run gh auth login)"; exit 1
 fi
 if [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$ANTHROPIC_AUTH_TOKEN" ] && [ "$NO_REVIEW" != "1" ]; then
   echo "[merge-bot] WARNING: no ANTHROPIC_AUTH_TOKEN (AI Gateway) or ANTHROPIC_API_KEY (direct) — set one, or NO_REVIEW=1 for mechanical-only. Refusing blanket approve."
