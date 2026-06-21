@@ -78,8 +78,27 @@ function readNames() {
 // per file, so once resolved we never recompute it; this keeps /api/names cheap
 // even though it's polled every few seconds.
 const _addedCache = new Map();
+// The workshop template clones name-wall shallow (--depth 1) for speed, which
+// leaves no real history, so the git first-commit time degenerates to the single
+// clone commit (identical for every file). Unshallow ONCE, best-effort, so the
+// chronological ordering has true per-file add times. No-op on a full clone or
+// when offline (we then fall back to mtime).
+let _unshallowed = false;
+function ensureFullHistory() {
+  if (_unshallowed) return;
+  _unshallowed = true; // only ever try once
+  try {
+    const shallow = cp.execFileSync("git", ["-C", ROOT, "rev-parse", "--is-shallow-repository"],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: 4000 }).trim();
+    if (shallow === "true") {
+      cp.execFileSync("git", ["-C", ROOT, "fetch", "--unshallow", "--quiet"],
+        { stdio: "ignore", timeout: 30000 });
+    }
+  } catch { /* offline / no remote / already full — fall back to mtime */ }
+}
 function addedTime(fname, full) {
   if (_addedCache.has(fname)) return _addedCache.get(fname);
+  ensureFullHistory();
   let t = 0;
   // Git: the FIRST commit that added this path (author time, seconds → ms).
   try {
