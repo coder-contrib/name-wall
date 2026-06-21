@@ -188,10 +188,21 @@ Edit your \`names/<handle>.json\` and push again — CSS animations and colors a
 }
 
 approve_and_merge() {
-  local num="$1"
+  local num="$1" author msg
   if [ "$DRY_RUN" = "1" ]; then echo "[merge-bot] DRY_RUN would approve+merge #$num"; return; fi
-  gh pr review "$num" --repo "$REPO" --approve \
-    --body "Approved by the workshop review bot. Your name is on the wall." 2>/dev/null
+  author=$(gh pr view "$num" --repo "$REPO" --json author --jq '.author.login' 2>/dev/null)
+  # Always leave an approving review with a little friendly comment BEFORE
+  # merging. GitHub forbids approving your own PR, so if the formal approve
+  # fails (e.g. a self-authored test PR) fall back to a plain comment so there
+  # is always a visible note, then still merge.
+  msg="Reviewed by the workshop bot — looks great${author:+, @$author}! Approving and adding your name to the wall. 🎉"
+  if gh pr review "$num" --repo "$REPO" --approve --body "$msg" 2>/dev/null; then
+    echo "[merge-bot] approved #$num (review posted)"
+  elif gh pr comment "$num" --repo "$REPO" --body "$msg" 2>/dev/null; then
+    echo "[merge-bot] approved #$num (commented — cannot self-review)"
+  else
+    echo "[merge-bot] WARNING: could not post approval on #$num; merging anyway"
+  fi
   if gh pr merge "$num" --repo "$REPO" --squash --admin --delete-branch=false 2>/dev/null; then
     echo "$num" >> "$MERGED_FILE"   # let the live queue drop it immediately
     echo "[merge-bot] merged #$num"
