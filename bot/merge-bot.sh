@@ -37,6 +37,12 @@ REVIEW_MODEL="${REVIEW_MODEL:-claude-sonnet-4-6}"
 MERGED_FILE="${MERGED_FILE:-/tmp/name-wall-merged}"
 REVIEWED_FILE="${REVIEWED_FILE:-/tmp/name-wall-reviewed}"
 ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
+# AI Gateway (Coder aibridge) support: when ANTHROPIC_AUTH_TOKEN is set we talk to
+# Anthropic THROUGH Coder's gateway (Authorization: Bearer <coder token>) at
+# ANTHROPIC_BASE_URL, so no raw provider key is needed. Falls back to the direct
+# Anthropic API with ANTHROPIC_API_KEY (x-api-key) when only that is set.
+ANTHROPIC_BASE_URL="${ANTHROPIC_BASE_URL:-https://api.anthropic.com}"
+ANTHROPIC_AUTH_TOKEN="${ANTHROPIC_AUTH_TOKEN:-}"
 NO_REVIEW="${NO_REVIEW:-0}"
 
 command -v gh >/dev/null || { echo "gh CLI required"; exit 1; }
@@ -52,8 +58,8 @@ if ! gh auth status >/dev/null 2>&1; then
   fi
   gh auth status >/dev/null 2>&1 || { echo "gh not authenticated (no login and no GITHUB_TOKEN)"; exit 1; }
 fi
-if [ -z "$ANTHROPIC_API_KEY" ] && [ "$NO_REVIEW" != "1" ]; then
-  echo "[merge-bot] WARNING: no ANTHROPIC_API_KEY — set NO_REVIEW=1 for mechanical-only, or provide a key. Refusing blanket approve."
+if [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$ANTHROPIC_AUTH_TOKEN" ] && [ "$NO_REVIEW" != "1" ]; then
+  echo "[merge-bot] WARNING: no ANTHROPIC_AUTH_TOKEN (AI Gateway) or ANTHROPIC_API_KEY (direct) — set one, or NO_REVIEW=1 for mechanical-only. Refusing blanket approve."
   exit 1
 fi
 touch "$MERGED_FILE" "$REVIEWED_FILE" 2>/dev/null || true
@@ -112,9 +118,18 @@ ${diff}"
 
   body=$(jq -n --arg m "$REVIEW_MODEL" --arg p "$prompt" \
     '{model:$m, max_tokens:200, messages:[{role:"user", content:$p}]}')
-  resp=$(curl -s --max-time 25 https://api.anthropic.com/v1/messages \
-    -H "x-api-key: ${ANTHROPIC_API_KEY}" -H "anthropic-version: 2023-06-01" \
-    -H "content-type: application/json" -d "$body" 2>/dev/null)
+  # Prefer Coder's AI Gateway (Bearer auth) when ANTHROPIC_AUTH_TOKEN is set;
+  # otherwise hit the Anthropic API directly with x-api-key. Both speak the same
+  # /v1/messages shape; ANTHROPIC_BASE_URL defaults to api.anthropic.com.
+  if [ -n "$ANTHROPIC_AUTH_TOKEN" ]; then
+    resp=$(curl -s --max-time 25 "${ANTHROPIC_BASE_URL%/}/v1/messages" \
+      -H "Authorization: Bearer ${ANTHROPIC_AUTH_TOKEN}" -H "anthropic-version: 2023-06-01" \
+      -H "content-type: application/json" -d "$body" 2>/dev/null)
+  else
+    resp=$(curl -s --max-time 25 "${ANTHROPIC_BASE_URL%/}/v1/messages" \
+      -H "x-api-key: ${ANTHROPIC_API_KEY}" -H "anthropic-version: 2023-06-01" \
+      -H "content-type: application/json" -d "$body" 2>/dev/null)
+  fi
   # Extract the model's text, then the decision field.
   local text
   text=$(echo "$resp" | jq -r '.content[0].text // empty' 2>/dev/null)
