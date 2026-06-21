@@ -282,9 +282,12 @@ footer a:hover { color: var(--coder-purple-400); }
   animation: pop 0.35s ease;
 }
 .queue li:last-child { border-bottom: none; }
-.queue .pr-user { color: var(--coder-purple-400); font-weight: 600; }
-.queue .pr-title { flex: 1; color: var(--coder-white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.queue .pr-num { color: var(--muted); font-family: "FT System Mono", "IBM Plex Mono", monospace; }
+.queue .pr-user { color: var(--coder-purple-400); font-weight: 600; text-decoration: none; }
+.queue a.pr-user:hover { text-decoration: underline; }
+.queue .pr-title { flex: 1; color: var(--coder-white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-decoration: none; }
+.queue a.pr-title:hover { text-decoration: underline; }
+.queue .pr-num { color: var(--muted); font-family: "FT System Mono", "IBM Plex Mono", monospace; text-decoration: none; }
+.queue a.pr-num:hover { color: var(--coder-cyan); }
 .queue .queue-empty { color: var(--muted); border: none; }
 
 
@@ -303,11 +306,184 @@ footer a:hover { color: var(--coder-purple-400); }
   background: rgba(255,255,255,0.03);
   border: 1px solid var(--border);
   box-shadow: 0 6px 30px rgba(0,0,0,0.3);
+  position: relative; /* anchor the hover "fullscreen" button */
 }
 #wall .name-frame {
   /* The iframe IS the region — fills it completely, no fixed canvas, no
      transform/scale, no letterbox. The author's html/body is told to be
      width:100%;height:100% so their art covers the whole box at any size. */
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: transparent;
+}
+
+/* ─── Per-card "fullscreen" button (top-right, on hover) ───────────────────── */
+.name-expand {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(9,11,11,0.55);
+  backdrop-filter: blur(4px);
+  color: rgba(255,255,255,0.92);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(-2px) scale(0.9);
+  transition: opacity 0.15s ease, transform 0.15s ease, background 0.15s ease;
+}
+.name:hover .name-expand,
+.name-expand:focus-visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+.name-expand:hover {
+  background: rgba(117,17,226,0.85); /* coder purple */
+  border-color: rgba(188,124,255,0.7);
+}
+/* Don't let the card's hover scale distort the button hit area on touch. */
+@media (hover: none) {
+  .name-expand { opacity: 1; transform: none; }
+}
+
+/* ─── Per-card hover links: contributor + PR (top-left, on hover) ──────────── */
+.name-links {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 3;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transform: translateY(-2px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none; /* enabled with the links themselves on hover */
+}
+.name:hover .name-links,
+.name-links:focus-within {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.name-links .nl {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 7px;
+  font-family: "FT System Mono", "IBM Plex Mono", monospace;
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  text-decoration: none;
+  color: rgba(255,255,255,0.92);
+  background: rgba(9,11,11,0.55);
+  border: 1px solid rgba(255,255,255,0.18);
+  backdrop-filter: blur(4px);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.name-links .nl:hover {
+  background: rgba(117,17,226,0.85); /* coder purple */
+  border-color: rgba(188,124,255,0.7);
+}
+.name-links .nl-pr {
+  color: var(--coder-cyan);
+  border-color: rgba(1,242,255,0.32);
+}
+.name-links .nl-pr:hover {
+  background: rgba(1,242,255,0.16);
+  border-color: rgba(1,242,255,0.7);
+  color: #fff;
+}
+@media (hover: none) {
+  .name-links { opacity: 1; transform: none; pointer-events: auto; }
+}
+
+/* ─── Single-name modal ("fullscreen" preview) ─────────────────────────────── */
+.name-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+}
+.name-modal .nm-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5,6,8,0.78);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.name-modal.open .nm-backdrop { opacity: 1; }
+.name-modal .nm-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(88vw, 1100px);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transform: scale(0.94);
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.2,0.9,0.3,1.25);
+}
+.name-modal.open .nm-dialog { opacity: 1; transform: scale(1); }
+.name-modal .nm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0 0.25rem 0.6rem;
+  color: #fff;
+}
+.name-modal .nm-title {
+  font-family: "Lay Grotesk", "Plus Jakarta Sans", sans-serif;
+  font-weight: 600;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  color: rgba(255,255,255,0.92);
+}
+.name-modal .nm-close {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.name-modal .nm-close:hover {
+  background: rgba(255,255,255,0.14);
+  border-color: rgba(255,255,255,0.32);
+}
+.name-modal .nm-stage {
+  /* Big canvas keeping the same card aspect ratio so the art looks like a
+     scaled-up version of the wall card, not a reflowed layout. */
+  width: 100%;
+  aspect-ratio: var(--card-aspect, 4 / 3);
+  max-height: 78vh;
+  border-radius: 18px;
+  overflow: hidden;
+  background: rgba(9,11,11,1);
+  border: 1px solid var(--border);
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+}
+.name-modal .nm-frame {
   width: 100%;
   height: 100%;
   border: 0;

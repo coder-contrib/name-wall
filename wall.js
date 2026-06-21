@@ -5,6 +5,7 @@
 const wall = document.getElementById("wall");
 const countEl = document.getElementById("count");
 const seen = new Map(); // handle -> { card, frame, sig }
+const WALL_REPO = "coder-contrib/name-wall"; // for linking PRs + contributors
 
 // ─── Rotating example prompts in the header ──────────────────────────────────
 // Cycles fun + networking-oriented prompt ideas so attendees see the range of
@@ -321,12 +322,47 @@ const present = new Set();
       frame.setAttribute("scrolling", "no");
       frame.srcdoc = docFor(n);
       card.appendChild(frame);
+      // Tiny "fullscreen" button, top-right, revealed on hover. Opens this card
+      // big in a modal so a single entry can be reviewed up close (and the
+      // attendee-preview flow can trigger it for their own card).
+      const expandBtn = document.createElement("button");
+      expandBtn.className = "name-expand";
+      expandBtn.type = "button";
+      expandBtn.title = "View fullscreen";
+      expandBtn.setAttribute("aria-label", `View ${k} fullscreen`);
+      // expand/fullscreen glyph (inline SVG so no external load)
+      expandBtn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M4 9V4h5v2H6v3H4zm0 6h2v3h3v2H4v-5zm16 0v5h-5v-2h3v-3h2zM15 6V4h5v5h-2V6h-3z"/></svg>';
+      expandBtn.addEventListener("click", (e) => {
+        e.stopPropagation(); // don't trigger the card's contact-link click
+        openModal(k);
+      });
+      card.appendChild(expandBtn);
+      // Hover overlay (top-left): small links to the contributor's GitHub
+      // profile and to their entry's PRs on the wall repo. Shown only on hover
+      // (same as the expand button). The handle is the GitHub login by
+      // convention (names/<handle>.json), so we can link both deterministically.
+      const handleLogin = (n.handle || "").replace(/[^A-Za-z0-9-]/g, "");
+      if (handleLogin) {
+        const links = document.createElement("div");
+        links.className = "name-links";
+        const ghHref = `https://github.com/${handleLogin}`;
+        // PRs authored by this handle against the wall repo (their card's PR(s)).
+        const prHref = `https://github.com/${WALL_REPO}/pulls?q=` +
+          encodeURIComponent(`is:pr author:${handleLogin}`);
+        links.innerHTML =
+          `<a class="nl nl-gh" href="${ghHref}" target="_blank" rel="noopener" title="@${handleLogin} on GitHub">@${handleLogin}</a>` +
+          `<a class="nl nl-pr" href="${prHref}" target="_blank" rel="noopener" title="View @${handleLogin}'s pull request">PR</a>`;
+        // Don't let clicks on these links also trigger the card's contact-link.
+        links.addEventListener("click", (e) => e.stopPropagation());
+        card.appendChild(links);
+      }
       wall.appendChild(card);
       card.addEventListener("animationend", () => card.classList.remove("name--enter"), { once: true });
-      seen.set(k, { card, frame, sig });
+      seen.set(k, { card, frame, sig, name: n });
     } else if (entry.sig !== sig) {
       // content changed → refresh the iframe in place (no re-animate)
       entry.frame.srcdoc = docFor(n);
+      entry.name = n; // keep latest data for the modal
       entry.card.dataset.status = statusKeyOf(n);
       // keep the card-level link in sync
       const lk2 = safeLink(n.link || n.url, n.contact);
@@ -340,6 +376,8 @@ const present = new Set();
         entry.card.removeAttribute("title");
       }
       entry.sig = sig;
+      // if this card is currently open in the modal, refresh the big view too
+      if (modalHandle === k) renderModal(n);
     }
   }
   // remove entries that disappeared
@@ -354,6 +392,14 @@ const present = new Set();
   document.body.dataset.density = densityFor(names.length);
   updateFilterBar(names);
   applyFilter();
+
+  // Honor a ?expand=<handle> request once the card exists (used by the
+  // attendee-preview flow to auto-open their own card big for review).
+  if (pendingExpand && seen.has(pendingExpand)) {
+    const h = pendingExpand;
+    pendingExpand = null;
+    openModal(h);
+  }
 
   // Empty state. Before the first successful load show a calm "Connecting"
   // message (the app-proxy tunnel may still be warming); only show the real
@@ -378,6 +424,72 @@ function esc(s) {
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
   }[c]));
 }
+
+// ─── Fullscreen / modal view for a single name ───────────────────────────────
+// Pops one card big and centered so it can be reviewed up close. Reuses the
+// exact same sandboxed docFor() render at a large size. The attendee-preview
+// flow opens the attendee's own card via ?expand=<handle> (or openModal()).
+let modalEl = null;
+let modalFrame = null;
+let modalTitle = null;
+let modalHandle = null;
+let pendingExpand = (new URLSearchParams(location.search).get("expand") || "").toLowerCase() || null;
+
+function buildModal() {
+  if (modalEl) return;
+  modalEl = document.createElement("div");
+  modalEl.className = "name-modal";
+  modalEl.hidden = true;
+  modalEl.innerHTML =
+    '<div class="nm-backdrop"></div>' +
+    '<div class="nm-dialog" role="dialog" aria-modal="true" aria-label="Name preview">' +
+    '  <div class="nm-head">' +
+    '    <span class="nm-title"></span>' +
+    '    <button class="nm-close" type="button" title="Close (Esc)" aria-label="Close">' +
+    '      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M18.3 5.71 12 12.01l-6.3-6.3-1.41 1.41L10.59 13.4l-6.3 6.3 1.41 1.41 6.3-6.3 6.3 6.3 1.41-1.41-6.3-6.3 6.3-6.29z"/></svg>' +
+    '    </button>' +
+    '  </div>' +
+    '  <div class="nm-stage"><iframe class="nm-frame" sandbox="" scrolling="no"></iframe></div>' +
+    '</div>';
+  document.body.appendChild(modalEl);
+  modalFrame = modalEl.querySelector(".nm-frame");
+  modalTitle = modalEl.querySelector(".nm-title");
+  modalEl.querySelector(".nm-close").addEventListener("click", closeModal);
+  modalEl.querySelector(".nm-backdrop").addEventListener("click", closeModal);
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
+}
+
+function renderModal(n) {
+  if (!modalFrame) return;
+  modalFrame.srcdoc = docFor(n);
+  modalTitle.textContent = (n.name || n.handle || "") + (n.handle ? `  ·  @${n.handle}` : "");
+}
+
+function openModal(handle) {
+  buildModal();
+  const entry = seen.get(handle);
+  if (!entry) { pendingExpand = handle; return; } // not rendered yet — open when it appears
+  modalHandle = handle;
+  renderModal(entry.name);
+  modalEl.hidden = false;
+  // next frame: add the "open" class so the CSS transition runs
+  requestAnimationFrame(() => modalEl.classList.add("open"));
+}
+
+function closeModal() {
+  if (!modalEl || modalEl.hidden) return;
+  modalEl.classList.remove("open");
+  modalHandle = null;
+  // clear ?expand= from the URL so a refresh doesn't re-open it
+  const u = new URL(location.href);
+  if (u.searchParams.has("expand")) { u.searchParams.delete("expand"); history.replaceState(null, "", u); }
+  setTimeout(() => { if (modalEl) { modalEl.hidden = true; modalFrame.srcdoc = ""; } }, 200);
+}
+
+// Expose for external triggers (e.g. the preview flow can call
+// window.expandCard("<handle>") from the page console / a launcher).
+window.expandCard = openModal;
+
 
 // On a freshly-started display the Coder app-proxy tunnel can be cold, so the
 // first fetch may fail or lag. Poll fast (600ms) until the first success, then
@@ -464,8 +576,13 @@ async function queueTick() {
       conflicts: "conflicts",
       queued: "queued",
     }[st] || st;
-    const sig = `${pr.user}|${pr.title}|${st}`;
-    const html = `<span class="pr-user">@${esc(pr.user || "")}</span> <span class="pr-title">${esc(pr.title || "")}</span> <span class="pr-status st-${esc(st)}">${esc(stLabel)}</span> <span class="pr-num">#${pr.number}</span>`;
+    const sig = `${pr.user}|${pr.title}|${st}|${pr.url || ""}`;
+    const prHref = pr.url ? esc(pr.url) : `https://github.com/${esc(WALL_REPO)}/pull/${pr.number}`;
+    const userHref = pr.user ? `https://github.com/${esc(pr.user)}` : "";
+    const userEl = pr.user
+      ? `<a class="pr-user" href="${userHref}" target="_blank" rel="noopener" title="@${esc(pr.user)} on GitHub">@${esc(pr.user)}</a>`
+      : `<span class="pr-user"></span>`;
+    const html = `${userEl} <a class="pr-title" href="${prHref}" target="_blank" rel="noopener" title="Open PR #${pr.number}">${esc(pr.title || "")}</a> <span class="pr-status st-${esc(st)}">${esc(stLabel)}</span> <a class="pr-num" href="${prHref}" target="_blank" rel="noopener" title="Open PR #${pr.number}">#${pr.number}</a>`;
     let e = queueSeen.get(pr.number);
     if (!e) {
       const li = document.createElement("li");

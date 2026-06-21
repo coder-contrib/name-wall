@@ -14,6 +14,7 @@ const http = require("http");
 const https = require("https");
 const fs = require("fs");
 const path = require("path");
+const cp = require("child_process");
 
 const ROOT = __dirname;
 const PORT = process.env.PORT || 8080;
@@ -51,12 +52,51 @@ function readNames() {
   for (const f of fs.readdirSync(dir)) {
     if (!f.endsWith(".json")) continue;
     try {
-      out.push(JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")));
+      const full = path.join(dir, f);
+      const entry = JSON.parse(fs.readFileSync(full, "utf8"));
+      // Stable ordering by "time added" so the wall renders chronologically and
+      // cards don't "pop around" between polls. Prefer the git first-commit time
+      // (survives clones/pulls, which reset file mtimes); fall back to the
+      // file's birthtime/mtime when git isn't available. _added is stripped
+      // before serving.
+      entry._added = addedTime(f, full);
+      out.push(entry);
     } catch {
       /* skip malformed entries so one bad file can't break the wall */
     }
   }
+  // Oldest first (earliest added at the front); ties broken by handle so the
+  // order is fully deterministic even when timestamps match.
+  out.sort((a, b) =>
+    (a._added - b._added) ||
+    String(a.handle || a.name || "").localeCompare(String(b.handle || b.name || "")));
+  for (const e of out) delete e._added;
   return out;
+}
+
+// Cache of name file -> "time added" (ms). Git first-commit time is immutable
+// per file, so once resolved we never recompute it; this keeps /api/names cheap
+// even though it's polled every few seconds.
+const _addedCache = new Map();
+function addedTime(fname, full) {
+  if (_addedCache.has(fname)) return _addedCache.get(fname);
+  let t = 0;
+  // Git: the FIRST commit that added this path (author time, seconds → ms).
+  try {
+    const o = cp.execFileSync(
+      "git",
+      ["-C", ROOT, "log", "--diff-filter=A", "--follow", "--format=%at", "-1", "--", path.join("names", fname)],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], timeout: 4000 }
+    ).trim();
+    if (o) t = parseInt(o, 10) * 1000;
+  } catch { /* git missing or not a repo — fall through to mtime */ }
+  if (!t) {
+    try { const st = fs.statSync(full); t = (st.birthtimeMs || st.mtimeMs || 0); } catch { /* ignore */ }
+  }
+  // Only cache a real git time (immutable). An mtime fallback may still change
+  // on a future pull, so don't pin it — but it's deterministic within a build.
+  if (t) _addedCache.set(fname, t);
+  return t;
 }
 
 // Count people actively doing the workshop right now. We use WORKSPACES, not
