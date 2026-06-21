@@ -415,7 +415,6 @@ let modalFrame = null;
 let modalTitle = null;
 let modalLinks = null;
 let modalHandle = null;
-let _blankTimer = null;
 let pendingExpand = (new URLSearchParams(location.search).get("expand") || "").toLowerCase() || null;
 
 function buildModal() {
@@ -433,10 +432,9 @@ function buildModal() {
     '      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M18.3 5.71 12 12.01l-6.3-6.3-1.41 1.41L10.59 13.4l-6.3 6.3 1.41 1.41 6.3-6.3 6.3 6.3 1.41-1.41-6.3-6.3 6.3-6.29z"/></svg>' +
     '    </button>' +
     '  </div>' +
-    '  <div class="nm-stage"><iframe class="nm-frame" sandbox="" scrolling="no"></iframe></div>' +
+    '  <div class="nm-stage"></div>' +
     '</div>';
   document.body.appendChild(modalEl);
-  modalFrame = modalEl.querySelector(".nm-frame");
   modalTitle = modalEl.querySelector(".nm-title");
   modalLinks = modalEl.querySelector(".nm-links");
   modalEl.querySelector(".nm-close").addEventListener("click", closeModal);
@@ -445,14 +443,19 @@ function buildModal() {
 }
 
 function renderModal(n) {
-  if (!modalFrame) return;
-  // Force a clean reload: blank first, then set the real content on the next
-  // frame. Reusing an iframe by overwriting srcdoc can leave it blank on a
-  // repeat open (browser doesn't always re-parse if it was mid-teardown), so we
-  // always give it a fresh parse.
-  const html = docFor(n);
-  modalFrame.srcdoc = "";
-  requestAnimationFrame(() => { if (modalFrame) modalFrame.srcdoc = html; });
+  if (!modalEl) return;
+  const stage = modalEl.querySelector(".nm-stage");
+  // Recreate the iframe from scratch on every open. Reusing one iframe and
+  // overwriting srcdoc is flaky (blank on repeat opens, especially when the
+  // element was display:none between opens), so a fresh node guarantees a clean
+  // parse and render every time.
+  if (modalFrame) modalFrame.remove();
+  modalFrame = document.createElement("iframe");
+  modalFrame.className = "nm-frame";
+  modalFrame.setAttribute("sandbox", "");
+  modalFrame.setAttribute("scrolling", "no");
+  modalFrame.srcdoc = docFor(n);
+  stage.appendChild(modalFrame);
   modalTitle.textContent = (n.name || n.handle || "") + (n.handle ? `  ·  @${n.handle}` : "");
   // Contributor + PR links live HERE (in the modal), not on the card hover. The
   // handle is the GitHub login by convention (names/<handle>.json).
@@ -477,14 +480,11 @@ function openModal(handle) {
   buildModal();
   const entry = seen.get(handle);
   if (!entry) { pendingExpand = handle; return; } // not rendered yet — open when it appears
-  // Cancel any pending "blank the iframe" timer from a previous close, otherwise
-  // it can fire right after we re-render and wipe the new content (blank modal
-  // on the 2nd+ open).
-  if (_blankTimer) { clearTimeout(_blankTimer); _blankTimer = null; }
   modalHandle = handle;
-  renderModal(entry.name);
+  // Show FIRST (so the iframe isn't created inside a display:none subtree),
+  // then render the fresh iframe, then trigger the open transition.
   modalEl.hidden = false;
-  // next frame: add the "open" class so the CSS transition runs
+  renderModal(entry.name);
   requestAnimationFrame(() => modalEl.classList.add("open"));
 }
 
@@ -493,19 +493,13 @@ function closeModal() {
   modalEl.classList.remove("open");
   modalHandle = null;
   // Hide IMMEDIATELY (display:none via [hidden]) so the fixed-position overlay
-  // can't keep intercepting clicks on the wall during/after the fade. We clear
-  // the iframe after the transition; the element itself is already non-blocking.
+  // can't keep intercepting clicks on the wall. Drop the iframe entirely so it
+  // frees resources; the next open builds a fresh one.
   modalEl.hidden = true;
+  if (modalFrame) { modalFrame.remove(); modalFrame = null; }
   // clear ?expand= from the URL so a refresh doesn't re-open it
   const u = new URL(location.href);
   if (u.searchParams.has("expand")) { u.searchParams.delete("expand"); history.replaceState(null, "", u); }
-  // Blank the iframe a beat later to free it — but only if still closed, and
-  // track the timer so a quick reopen can cancel it (see openModal).
-  if (_blankTimer) clearTimeout(_blankTimer);
-  _blankTimer = setTimeout(() => {
-    _blankTimer = null;
-    if (modalEl && modalEl.hidden) modalFrame.srcdoc = "";
-  }, 220);
 }
 
 // Expose for external triggers (e.g. the preview flow can call
