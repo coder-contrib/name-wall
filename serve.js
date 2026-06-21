@@ -324,12 +324,19 @@ http
     }
     let file = req.url === "/" ? "/index.html" : req.url.split("?")[0];
     const full = path.join(ROOT, path.normalize(file));
-    if (!full.startsWith(ROOT) || !fs.existsSync(full)) {
+    // Reject traversal, missing files, AND directories (reading a dir as a
+    // stream throws EISDIR and would otherwise crash the whole server).
+    let stat;
+    try { stat = fs.statSync(full); } catch { stat = null; }
+    if (!full.startsWith(ROOT) || !stat || !stat.isFile()) {
       res.writeHead(404);
       res.end("Not found");
       return;
     }
     res.writeHead(200, { "Content-Type": TYPES[path.extname(full)] || "application/octet-stream" });
-    fs.createReadStream(full).pipe(res);
+    const stream = fs.createReadStream(full);
+    // Never let a file-read error take down the process.
+    stream.on("error", () => { try { res.destroy(); } catch { /* ignore */ } });
+    stream.pipe(res);
   })
   .listen(PORT, "0.0.0.0", () => console.log(`Wall of Names preview on http://0.0.0.0:${PORT}`));

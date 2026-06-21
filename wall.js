@@ -337,25 +337,6 @@ const present = new Set();
         openModal(k);
       });
       card.appendChild(expandBtn);
-      // Hover overlay (top-left): small links to the contributor's GitHub
-      // profile and to their entry's PRs on the wall repo. Shown only on hover
-      // (same as the expand button). The handle is the GitHub login by
-      // convention (names/<handle>.json), so we can link both deterministically.
-      const handleLogin = (n.handle || "").replace(/[^A-Za-z0-9-]/g, "");
-      if (handleLogin) {
-        const links = document.createElement("div");
-        links.className = "name-links";
-        const ghHref = `https://github.com/${handleLogin}`;
-        // PRs authored by this handle against the wall repo (their card's PR(s)).
-        const prHref = `https://github.com/${WALL_REPO}/pulls?q=` +
-          encodeURIComponent(`is:pr author:${handleLogin}`);
-        links.innerHTML =
-          `<a class="nl nl-gh" href="${ghHref}" target="_blank" rel="noopener" title="@${handleLogin} on GitHub">@${handleLogin}</a>` +
-          `<a class="nl nl-pr" href="${prHref}" target="_blank" rel="noopener" title="View @${handleLogin}'s pull request">PR</a>`;
-        // Don't let clicks on these links also trigger the card's contact-link.
-        links.addEventListener("click", (e) => e.stopPropagation());
-        card.appendChild(links);
-      }
       wall.appendChild(card);
       card.addEventListener("animationend", () => card.classList.remove("name--enter"), { once: true });
       seen.set(k, { card, frame, sig, name: n });
@@ -432,6 +413,7 @@ function esc(s) {
 let modalEl = null;
 let modalFrame = null;
 let modalTitle = null;
+let modalLinks = null;
 let modalHandle = null;
 let pendingExpand = (new URLSearchParams(location.search).get("expand") || "").toLowerCase() || null;
 
@@ -445,6 +427,7 @@ function buildModal() {
     '<div class="nm-dialog" role="dialog" aria-modal="true" aria-label="Name preview">' +
     '  <div class="nm-head">' +
     '    <span class="nm-title"></span>' +
+    '    <span class="nm-links"></span>' +
     '    <button class="nm-close" type="button" title="Close (Esc)" aria-label="Close">' +
     '      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M18.3 5.71 12 12.01l-6.3-6.3-1.41 1.41L10.59 13.4l-6.3 6.3 1.41 1.41 6.3-6.3 6.3 6.3 1.41-1.41-6.3-6.3 6.3-6.29z"/></svg>' +
     '    </button>' +
@@ -454,6 +437,7 @@ function buildModal() {
   document.body.appendChild(modalEl);
   modalFrame = modalEl.querySelector(".nm-frame");
   modalTitle = modalEl.querySelector(".nm-title");
+  modalLinks = modalEl.querySelector(".nm-links");
   modalEl.querySelector(".nm-close").addEventListener("click", closeModal);
   modalEl.querySelector(".nm-backdrop").addEventListener("click", closeModal);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeModal(); });
@@ -463,6 +447,23 @@ function renderModal(n) {
   if (!modalFrame) return;
   modalFrame.srcdoc = docFor(n);
   modalTitle.textContent = (n.name || n.handle || "") + (n.handle ? `  ·  @${n.handle}` : "");
+  // Contributor + PR links live HERE (in the modal), not on the card hover. The
+  // handle is the GitHub login by convention (names/<handle>.json).
+  const login = String(n.handle || "").replace(/[^A-Za-z0-9-]/g, "");
+  if (login) {
+    const ghHref = `https://github.com/${login}`;
+    const prHref = `https://github.com/${WALL_REPO}/pulls?q=` +
+      encodeURIComponent(`is:pr author:${login}`);
+    modalLinks.innerHTML =
+      `<a class="nm-link" href="${ghHref}" target="_blank" rel="noopener" title="@${login} on GitHub">` +
+      `<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>` +
+      `@${login}</a>` +
+      `<a class="nm-link nm-link-pr" href="${prHref}" target="_blank" rel="noopener" title="View @${login}'s pull request">` +
+      `<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path fill="currentColor" d="M5 3.25a1.75 1.75 0 1 0-2.5 1.58v6.34a1.75 1.75 0 1 0 1.5 0V4.83A1.75 1.75 0 0 0 5 3.25zM3.75 2.5a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5zm0 10a.75.75 0 1 1 0 1.5.75.75 0 0 1 0-1.5zm8.5-1.42V5.5A2.5 2.5 0 0 0 9.75 3H8.66l.97-.97L8.57.97 5.79 3.75l2.78 2.78 1.06-1.06-.97-.97h1.09a1 1 0 0 1 1 1v5.58a1.75 1.75 0 1 0 1.5 0zM11.5 14a.75.75 0 1 1 0-1.5.75.75 0 0 1 0 1.5z"/></svg>` +
+      `PR</a>`;
+  } else {
+    modalLinks.innerHTML = "";
+  }
 }
 
 function openModal(handle) {
@@ -480,10 +481,14 @@ function closeModal() {
   if (!modalEl || modalEl.hidden) return;
   modalEl.classList.remove("open");
   modalHandle = null;
+  // Hide IMMEDIATELY (display:none via [hidden]) so the fixed-position overlay
+  // can't keep intercepting clicks on the wall during/after the fade. We clear
+  // the iframe after the transition; the element itself is already non-blocking.
+  modalEl.hidden = true;
   // clear ?expand= from the URL so a refresh doesn't re-open it
   const u = new URL(location.href);
   if (u.searchParams.has("expand")) { u.searchParams.delete("expand"); history.replaceState(null, "", u); }
-  setTimeout(() => { if (modalEl) { modalEl.hidden = true; modalFrame.srcdoc = ""; } }, 200);
+  setTimeout(() => { if (modalEl && modalEl.hidden) modalFrame.srcdoc = ""; }, 220);
 }
 
 // Expose for external triggers (e.g. the preview flow can call
