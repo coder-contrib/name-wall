@@ -1,6 +1,0 @@
-{
-  "handle": "bpmct",
-  "name": "bpmct",
-  "html": "<div class=\"bpmct-wrap\"><span class=\"bpmct-text\">bpmct</span></div>",
-  "css": ".bpmct-wrap { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a001a 0%, #2d0057 50%, #1a001a 100%); } .bpmct-text { font-family: Georgia, serif; font-size: clamp(2rem, 8vw, 4rem); font-weight: bold; color: #cc66ff; text-shadow: 0 0 10px #9900ff, 0 0 25px #cc00ff, 0 0 50px #9900cc, 0 0 80px #660099; letter-spacing: 0.15em; animation: bpmct-pulse 2s ease-in-out infinite alternate; } @keyframes bpmct-pulse { from { text-shadow: 0 0 10px #9900ff, 0 0 25px #cc00ff, 0 0 50px #9900cc, 0 0 80px #660099; color: #cc66ff; } to { text-shadow: 0 0 20px #bb44ff, 0 0 45px #dd00ff, 0 0 80px #bb00dd, 0 0 120px #880099; color: #ee88ff; } }"
-}
