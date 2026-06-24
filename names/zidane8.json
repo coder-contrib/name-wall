@@ -1,0 +1,6 @@
+{
+  "handle": "zidane8",
+  "name": "zidane8",
+  "html": "<div class=\"zidane8-card\"><span class=\"zidane8-name\">zidane8</span></div>",
+  "css": ".zidane8-card { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #0d1f0d; } .zidane8-name { font-family: Georgia, serif; font-size: clamp(1.5rem, 8vw, 3.5rem); font-weight: bold; color: #00e84c; text-shadow: 0 0 8px #00e84c, 0 0 20px #00c43c, 0 0 40px #009930; letter-spacing: 0.05em; animation: zidane8-pulse 2s ease-in-out infinite; } @keyframes zidane8-pulse { 0%, 100% { text-shadow: 0 0 8px #00e84c, 0 0 20px #00c43c, 0 0 40px #009930; } 50% { text-shadow: 0 0 16px #00ff66, 0 0 40px #00e84c, 0 0 80px #00c43c; } }"
+}
