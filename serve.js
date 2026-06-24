@@ -172,15 +172,20 @@ function readActive(cb) {
 // Small helper: GET a Coder API path with the admin token, parse JSON.
 function coderGet(p, cb) {
   if (!CODER_TOKEN) return cb(null);
+  // Same once-guard as ghGet: never call cb more than once (success + late
+  // error/timeout would otherwise double-respond and crash the server).
+  let done = false;
+  const once = (v) => { if (done) return; done = true; cb(v); };
   const url = new URL(CODER_URL + p);
   const lib = url.protocol === "https:" ? https : http;
   const req = lib.request(url, { headers: { "Coder-Session-Token": CODER_TOKEN }, timeout: 4000 }, (r) => {
     let body = "";
     r.on("data", (c) => (body += c));
-    r.on("end", () => { try { cb(JSON.parse(body)); } catch { cb(null); } });
+    r.on("end", () => { try { once(JSON.parse(body)); } catch { once(null); } });
+    r.on("error", () => once(null));
   });
-  req.on("error", () => cb(null));
-  req.on("timeout", () => { req.destroy(); cb(null); });
+  req.on("error", () => once(null));
+  req.on("timeout", () => { req.destroy(); once(null); });
   req.end();
 }
 
@@ -220,6 +225,12 @@ const WALL_REPO = process.env.WALL_REPO || "coder-contrib/name-wall";
 // GitHub GET helper (REST, token auth) returning parsed JSON.
 function ghGet(path, cb) {
   if (!GH_TOKEN) return cb(null);
+  // Guard: the response handler AND the error/timeout handlers can each fire,
+  // so ensure cb runs exactly once. Otherwise a request that errors after
+  // (or instead of) ending calls cb twice — the route handler then writes the
+  // response twice and the process dies with ERR_HTTP_HEADERS_SENT.
+  let done = false;
+  const once = (v) => { if (done) return; done = true; cb(v); };
   const u = new URL("https://api.github.com" + path);
   const req = https.request(u, {
     headers: {
@@ -231,10 +242,11 @@ function ghGet(path, cb) {
   }, (r) => {
     let body = "";
     r.on("data", (c) => (body += c));
-    r.on("end", () => { try { cb(JSON.parse(body)); } catch { cb(null); } });
+    r.on("end", () => { try { once(JSON.parse(body)); } catch { once(null); } });
+    r.on("error", () => once(null));
   });
-  req.on("error", () => cb(null));
-  req.on("timeout", () => { req.destroy(); cb(null); });
+  req.on("error", () => once(null));
+  req.on("timeout", () => { req.destroy(); once(null); });
   req.end();
 }
 
@@ -296,30 +308,27 @@ function readPending(cb) {
 
 http
   .createServer((req, res) => {
-    if (req.url === "/api/names") {
+    // Respond with JSON exactly once — ignores any second call (e.g. a stray
+    // double callback) instead of throwing ERR_HTTP_HEADERS_SENT and crashing.
+    const sendJSON = (data) => {
+      if (res.headersSent || res.writableEnded) return;
       res.writeHead(200, { "Content-Type": TYPES[".json"] });
-      res.end(JSON.stringify(readNames()));
+      res.end(JSON.stringify(data));
+    };
+    if (req.url === "/api/names") {
+      sendJSON(readNames());
       return;
     }
     if (req.url === "/api/active") {
-      readActive((data) => {
-        res.writeHead(200, { "Content-Type": TYPES[".json"] });
-        res.end(JSON.stringify(data));
-      });
+      readActive(sendJSON);
       return;
     }
     if (req.url === "/api/pending") {
-      readPending((data) => {
-        res.writeHead(200, { "Content-Type": TYPES[".json"] });
-        res.end(JSON.stringify(data));
-      });
+      readPending(sendJSON);
       return;
     }
     if (req.url === "/api/members") {
-      readMembers((data) => {
-        res.writeHead(200, { "Content-Type": TYPES[".json"] });
-        res.end(JSON.stringify(data));
-      });
+      readMembers(sendJSON);
       return;
     }
     let file = req.url === "/" ? "/index.html" : req.url.split("?")[0];
@@ -340,3 +349,9 @@ http
     stream.pipe(res);
   })
   .listen(PORT, "0.0.0.0", () => console.log(`Wall of Names preview on http://0.0.0.0:${PORT}`));
+
+// Last-resort safety net: this is a long-running display server that must never
+// hard-exit on a stray async error (a flaky GitHub/Coder fetch, a socket reset,
+// etc.). Log and keep serving instead of letting an uncaught error kill it.
+process.on("uncaughtException", (e) => console.error("[serve] uncaughtException (continuing):", e && e.message));
+process.on("unhandledRejection", (e) => console.error("[serve] unhandledRejection (continuing):", e && (e.message || e)));
