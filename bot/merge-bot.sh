@@ -36,6 +36,7 @@ DRY_RUN="${DRY_RUN:-0}"
 REVIEW_MODEL="${REVIEW_MODEL:-claude-sonnet-4-6}"
 MERGED_FILE="${MERGED_FILE:-/tmp/name-wall-merged}"
 REVIEWED_FILE="${REVIEWED_FILE:-/tmp/name-wall-reviewed}"
+APPROVED_FILE="${APPROVED_FILE:-/tmp/name-wall-approved}"
 ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
 # AI Gateway (Coder aibridge) support: when ANTHROPIC_AUTH_TOKEN is set we talk to
 # Anthropic THROUGH Coder's gateway (Authorization: Bearer <coder token>) at
@@ -73,7 +74,7 @@ if [ -z "$ANTHROPIC_API_KEY" ] && [ -z "$ANTHROPIC_AUTH_TOKEN" ] && [ "$NO_REVIE
   echo "[merge-bot] WARNING: no ANTHROPIC_AUTH_TOKEN (AI Gateway) or ANTHROPIC_API_KEY (direct) — set one, or NO_REVIEW=1 for mechanical-only. Refusing blanket approve."
   exit 1
 fi
-touch "$MERGED_FILE" "$REVIEWED_FILE" 2>/dev/null || true
+touch "$MERGED_FILE" "$REVIEWED_FILE" "$APPROVED_FILE" 2>/dev/null || true
 
 echo "[merge-bot] watching $REPO (interval=${INTERVAL}s dry_run=$DRY_RUN review=$([ "$NO_REVIEW" = 1 ] && echo off || echo on))"
 
@@ -188,26 +189,36 @@ Edit your \`names/<handle>.json\` and push again — CSS animations and colors a
 }
 
 approve_and_merge() {
-  local num="$1" author msg
+  local num="$1" author msg sha key
   if [ "$DRY_RUN" = "1" ]; then echo "[merge-bot] DRY_RUN would approve+merge #$num"; return; fi
-  author=$(gh pr view "$num" --repo "$REPO" --json author --jq '.author.login' 2>/dev/null)
-  # Always leave an approving review with a little friendly comment BEFORE
-  # merging. GitHub forbids approving your own PR, so if the formal approve
-  # fails (e.g. a self-authored test PR) fall back to a plain comment so there
-  # is always a visible note, then still merge.
-  msg="Reviewed by the workshop bot — looks great${author:+, @$author}! Approving and adding your name to the wall. 🎉"
-  if gh pr review "$num" --repo "$REPO" --approve --body "$msg" 2>/dev/null; then
-    echo "[merge-bot] approved #$num (review posted)"
-  elif gh pr comment "$num" --repo "$REPO" --body "$msg" 2>/dev/null; then
-    echo "[merge-bot] approved #$num (commented — cannot self-review)"
-  else
-    echo "[merge-bot] WARNING: could not post approval on #$num; merging anyway"
+  # Approve ONCE per head commit. GitHub's squash-merge can transiently fail
+  # (e.g. 405 while mergeability is still computing right after the PR opens),
+  # and we retry the merge on the next poll pass. Without this guard the retry
+  # re-posts the approving review every pass — spamming a PR with dozens of
+  # identical approvals before it finally merges. Track PR#@sha so we approve
+  # only the first time, then just retry the merge.
+  sha=$(gh pr view "$num" --repo "$REPO" --json headRefOid --jq '.headRefOid' 2>/dev/null)
+  key="${num}@${sha}"
+  if ! grep -qxF "$key" "$APPROVED_FILE" 2>/dev/null; then
+    author=$(gh pr view "$num" --repo "$REPO" --json author --jq '.author.login' 2>/dev/null)
+    # Leave an approving review with a little friendly comment. GitHub forbids
+    # approving your own PR, so if the formal approve fails (e.g. a self-authored
+    # test PR) fall back to a plain comment so there is always a visible note.
+    msg="Reviewed by the workshop bot — looks great${author:+, @$author}! Approving and adding your name to the wall. 🎉"
+    if gh pr review "$num" --repo "$REPO" --approve --body "$msg" 2>/dev/null; then
+      echo "[merge-bot] approved #$num (review posted)"
+    elif gh pr comment "$num" --repo "$REPO" --body "$msg" 2>/dev/null; then
+      echo "[merge-bot] approved #$num (commented — cannot self-review)"
+    else
+      echo "[merge-bot] WARNING: could not post approval on #$num; merging anyway"
+    fi
+    echo "$key" >> "$APPROVED_FILE"   # don't re-approve this commit on retries
   fi
   if gh pr merge "$num" --repo "$REPO" --squash --admin --delete-branch=false 2>/dev/null; then
     echo "$num" >> "$MERGED_FILE"   # let the live queue drop it immediately
     echo "[merge-bot] merged #$num"
   else
-    echo "[merge-bot] merge failed for #$num (retry next pass)"
+    echo "[merge-bot] merge not ready for #$num (will retry)"
   fi
 }
 
@@ -218,6 +229,14 @@ while true; do
       # Mechanically blocked (multiple files, a non-names file, or editing
       # someone else's entry). Tell the author once instead of skipping silently.
       request_changes "$num" "This PR must add or edit only your own names/<your-handle>.json (one file). It currently touches other files or another person's entry."
+      continue
+    fi
+    # If we've already approved THIS commit, skip the (paid) re-review and just
+    # retry the merge — the merge may have been transiently not-ready last pass.
+    cur_sha=$(gh pr view "$num" --repo "$REPO" --json headRefOid --jq '.headRefOid' 2>/dev/null)
+    if grep -qxF "${num}@${cur_sha}" "$APPROVED_FILE" 2>/dev/null; then
+      approve_and_merge "$num"
+      sleep 1
       continue
     fi
     verdict=$(agent_review "$num")
