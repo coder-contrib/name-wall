@@ -307,6 +307,13 @@ footer a:hover { color: var(--coder-purple-400); }
   border: 1px solid var(--border);
   box-shadow: 0 6px 30px rgba(0,0,0,0.3);
   position: relative; /* anchor the hover "fullscreen" button */
+  /* Skip rendering/animation work for cards that are scrolled offscreen. Each
+     card is a sandboxed iframe with its own (often animated) CSS, so a wall of
+     many cards is expensive; content-visibility lets the browser skip layout +
+     paint + animation for the ones not near the viewport. contain-intrinsic-size
+     keeps the scroll height stable so the grid doesn't jump. */
+  content-visibility: auto;
+  contain-intrinsic-size: 220px 165px;
 }
 #wall .name-frame {
   /* The iframe IS the region — fills it completely, no fixed canvas, no

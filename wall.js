@@ -320,6 +320,7 @@ const present = new Set();
       frame.className = "name-frame";
       frame.setAttribute("sandbox", ""); // CSS only — no scripts, no popups; the parent card handles clicks
       frame.setAttribute("scrolling", "no");
+      frame.setAttribute("loading", "lazy"); // don't render offscreen card iframes until near the viewport
       frame.srcdoc = docFor(n);
       card.appendChild(frame);
       // Tiny "fullscreen" button, top-right, revealed on hover. Opens this card

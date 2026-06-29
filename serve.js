@@ -342,7 +342,15 @@ http
       res.end("Not found");
       return;
     }
-    res.writeHead(200, { "Content-Type": TYPES[path.extname(full)] || "application/octet-stream" });
+    res.writeHead(200, {
+      "Content-Type": TYPES[path.extname(full)] || "application/octet-stream",
+      // Cache static assets so the browser doesn't re-download fonts/CSS/JS on
+      // every poll and (crucially) for every sandboxed card iframe. Fonts +
+      // images are content-stable here, so cache them hard; HTML/JS shorter.
+      "Cache-Control": /\.(woff2?|ttf|otf|png|jpe?g|gif|svg|ico)$/i.test(full)
+        ? "public, max-age=604800, immutable"          // 7d for fonts/images
+        : "public, max-age=300",                         // 5m for html/css/js
+    });
     const stream = fs.createReadStream(full);
     // Never let a file-read error take down the process.
     stream.on("error", () => { try { res.destroy(); } catch { /* ignore */ } });
